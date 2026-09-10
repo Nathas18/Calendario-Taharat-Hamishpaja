@@ -1,0 +1,75 @@
+
+const MONTHS=['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+let view=new Date(); let selected=null; // view se normaliza abajo al inicio del mes hebreo
+const API_URL='https://ifrtdtzkdgtfjfxesszp.supabase.co/functions/v1/tahara-api';
+const SESSION_KEY='tahara_session_v1';
+const authListeners=[];
+function storedSession(){try{return JSON.parse(localStorage.getItem(SESSION_KEY)||'null')}catch{return null}}
+function saveSession(session){if(session)localStorage.setItem(SESSION_KEY,JSON.stringify(session));else localStorage.removeItem(SESSION_KEY)}
+function emitAuth(event,session){for(const cb of authListeners){try{cb(event,session)}catch(e){console.error(e)}}}
+async function apiCall(action,payload={},token=null){
+ const headers={'Content-Type':'application/json'};if(token)headers.Authorization='Bearer '+token;
+ const r=await fetch(API_URL,{method:'POST',headers,body:JSON.stringify({action,...payload})});
+ let j={};try{j=await r.json()}catch{}
+ if(!r.ok)throw new Error(j.error||'Error de conexión');return j;
+}
+async function refreshStoredSession(){let s=storedSession();if(!s?.refresh_token)return null;try{let j=await apiCall('refresh',{refresh_token:s.refresh_token});saveSession(j.session);return j.session}catch{saveSession(null);return null}}
+async function validSession(){let s=storedSession();if(!s?.access_token)return null;try{let j=await apiCall('session',{},s.access_token);return {...s,user:j.user}}catch{return await refreshStoredSession()}}
+async function authSignUp(email,password){let j=await apiCall('signup',{email,password});if(j.session){saveSession(j.session);emitAuth('SIGNED_IN',j.session)}return j}
+async function authSignIn(email,password){let j=await apiCall('login',{email,password});saveSession(j.session);emitAuth('SIGNED_IN',j.session);return j}
+function authSignOut(){saveSession(null);emitAuth('SIGNED_OUT',null)}
+async function loadSettingsRemote(){let s=await validSession();if(!s)throw new Error('Sesión inválida');return await apiCall('load_settings',{},s.access_token)}
+async function saveSettingsRemote(settings){let s=await validSession();if(!s)throw new Error('Sesión inválida');return await apiCall('save_settings',{settings},s.access_token)}
+const defaultState=()=>({events:[],settings:{wait:7,d31:true,orJodesh:true,orBeinoni:true,orHaflaga:false,hashMin:20,hashMax:40}});
+let state=defaultState();
+let currentUser=null;
+let saveTimer=null;
+state.settings=state.settings||{};if(state.settings.orJodesh===undefined)state.settings.orJodesh=state.settings.or!==undefined?!!state.settings.or:true;if(state.settings.orBeinoni===undefined)state.settings.orBeinoni=state.settings.or!==undefined?!!state.settings.or:true;if(state.settings.orHaflaga===undefined)state.settings.orHaflaga=false;if(state.settings.d31===undefined)state.settings.d31=true;if(state.settings.hashMin===undefined)state.settings.hashMin=20;if(state.settings.hashMax===undefined)state.settings.hashMax=40;
+// Migración: asigna ID a registros antiguos para poder editarlos/eliminarlos de forma confiable.
+state.events=state.events.map((e,i)=>({...e,id:e.id||('legacy-'+e.date+'-'+e.ona+'-'+e.type+'-'+i)})).filter(e=>e.type!=='bleeding');
+const save=()=>{
+  if(!currentUser)return;
+  clearTimeout(saveTimer);
+  saveTimer=setTimeout(async()=>{
+    const payload={...state,settings:{...defaultState().settings,...state.settings}};
+    try{await saveSettingsRemote(payload)}catch(error){console.error('No se pudo guardar',error)}
+  },180);
+};
+save();
+function heb(d){try{return new Intl.DateTimeFormat('es-u-ca-hebrew',{day:'numeric',month:'long',year:'numeric'}).format(d)}catch(e){return 'Fecha hebrea'}}
+
+const HMONTH_ES={
+ 'Nisan':'Nisán','Iyar':'Iyar','Sivan':'Siván','Tamuz':'Tamúz','Tammuz':'Tamúz','Av':'Ab','Elul':'Elúl',
+ 'Tishri':'Tishré','Tishrei':'Tishré','Heshvan':'Jeshván','Cheshvan':'Jeshván','Marcheshvan':'Jeshván',
+ 'Kislev':'Kislév','Tevet':'Tebét','Shevat':'Shebát','Adar':'Adar','Adar I':'Adar A','Adar II':'Adar B'
+};
+function hMonthEs(m){return HMONTH_ES[m]||m}
+// Fiestas judías (minhag de diáspora): etiquetas informativas dentro de Laila/Yom.
+// El motor de Tahará sigue separado; estas etiquetas NO cambian cálculos halájicos.
+function holidayFor(d){
+ const hp=hebParts(d); if(!hp)return null;
+ const m=hp.month, n=hp.day;
+ const is=(...names)=>names.includes(m);
+ let h=null;
+ if(is('Tishri','Tishrei')){
+   if(n===1)h={night:'1ª noche de Rosh Hashaná',day:'1er día de Rosh Hashaná',yomtov:true};
+   else if(n===2)h={night:'2ª noche de Rosh Hashaná',day:'2º día de Rosh Hashaná',yomtov:true};
+   else if(n===10)h={night:'Noche de Yom Kipur',day:'Yom Kipur',yomtov:true};
+   else if(n===15)h={night:'1ª noche de Sucot',day:'1er día de Sucot',yomtov:true};
+   else if(n===16)h={night:'2ª noche de Sucot',day:'2º día de Sucot',yomtov:true};
+   else if(n>=17&&n<=20)h={night:'Noche de Jol Hamoed Sucot',day:'Jol Hamoed Sucot',yomtov:false};
+   else if(n===21)h={night:'Noche de Hoshana Rabá',day:'Hoshana Rabá',yomtov:false};
+   else if(n===22)h={night:'Noche de Sheminí Atzeret',day:'Sheminí Atzeret',yomtov:true};
+   else if(n===23)h={night:'Noche de Simjat Torá',day:'Simjat Torá',yomtov:true};
+ }
+ if(is('Kislev') && n>=25) h={night:`${n-24}ª noche de Janucá`,day:`${n-24}º día de Janucá`,yomtov:false};
+ if(is('Tevet')){
+   // Janucá puede continuar 1, 2 o 3 de Tebét según la duración de Kislév.
+   let q=new Date(d),count=0,found=false;
+   for(let i=0;i<8;i++){let x=new Date(q);x.setDate(x.getDate()-i);let z=hebParts(x);if(z&&z.month==='Kislev'&&z.day===25){count=i+1;found=true;break}}
+   if(found&&count<=8)h={night:`${count}ª noche de Janucá`,day:`${count}º día de Janucá`,yomtov:false};
+   if(n===10)h={night:'Noche de Asará BeTebét',day:'Asará BeTebét',yomtov:false};
+ }
+ if(is('Shevat')&&n===15)h={night:'Noche de Tu Bishvat',day:'Tu Bishvat',yomtov:false};
+ if(is('Adar I')&&n===14)h={night:'Noche de Purim Katán',day:'Purim Katán',yomtov:false};
+ if(is('Adar','Adar II')){
