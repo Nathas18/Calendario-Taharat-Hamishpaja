@@ -1,0 +1,70 @@
+   if(n===13)h={night:'Noche de Taanit Ester',day:'Taanit Ester',yomtov:false};
+   else if(n===14)h={night:'Noche de Purim',day:'Purim',yomtov:false};
+   else if(n===15)h={night:'Noche de Shushán Purim',day:'Shushán Purim',yomtov:false};
+ }
+ if(is('Nisan')){
+   if(n===14)h={night:'Noche de Erev Pésaj',day:'Erev Pésaj',yomtov:false};
+   else if(n===15)h={night:'1ª noche de Pésaj',day:'1er día de Pésaj',yomtov:true};
+   else if(n===16)h={night:'2ª noche de Pésaj',day:'2º día de Pésaj',yomtov:true};
+   else if(n>=17&&n<=20)h={night:'Noche de Jol Hamoed Pésaj',day:'Jol Hamoed Pésaj',yomtov:false};
+   else if(n===21)h={night:'Noche de 7º día de Pésaj',day:'7º día de Pésaj',yomtov:true};
+   else if(n===22)h={night:'Noche de 8º día de Pésaj',day:'8º día de Pésaj',yomtov:true};
+ }
+ if(is('Iyar')&&n===18)h={night:'Noche de Lag BaÓmer',day:'Lag BaÓmer',yomtov:false};
+ if(is('Sivan')){
+   if(n===6)h={night:'1ª noche de Shavuot',day:'1er día de Shavuot',yomtov:true};
+   else if(n===7)h={night:'2ª noche de Shavuot',day:'2º día de Shavuot',yomtov:true};
+ }
+ if(is('Tamuz','Tammuz')&&n===17)h={night:'Noche de 17 de Tamúz',day:'17 de Tamúz',yomtov:false};
+ if(is('Av')){
+   if(n===9)h={night:'Noche de Tishá BeAb',day:'Tishá BeAb',yomtov:false};
+   else if(n===15)h={night:'Noche de Tu BeAb',day:'Tu BeAb',yomtov:false};
+ }
+ return h;
+}
+function nerotFor(d,ona,holiday){
+ if(ona!=='laila')return '';
+ const shabbat=d.getDay()===6;
+ const yomtov=!!(holiday&&holiday.yomtov);
+ return (shabbat||yomtov)?'<span class="nerot" title="Nerot">🕯️🕯️</span>':'';
+}
+function localISO(d){let y=d.getFullYear(),m=String(d.getMonth()+1).padStart(2,'0'),q=String(d.getDate()).padStart(2,'0');return `${y}-${m}-${q}`}
+function atNoon(iso){return new Date(iso+'T12:00:00')}
+function hebMonthStart(d){let q=new Date(d);q.setHours(12,0,0,0);for(let i=0;i<31;i++){let hp=hebParts(q);if(hp&&hp.day===1)return new Date(q);q.setDate(q.getDate()-1)}return new Date(d)}
+function nextHebMonthStart(start){let q=new Date(start);q.setDate(q.getDate()+27);for(let i=0;i<6;i++){let hp=hebParts(q);if(hp&&hp.day===1)return new Date(q);q.setDate(q.getDate()+1)}let z=new Date(start);z.setDate(z.getDate()+30);return hebMonthStart(z)}
+function prevHebMonthStart(start){let q=new Date(start);q.setDate(q.getDate()-1);return hebMonthStart(q)}
+function civilMonthSpan(start,end){let a=new Date(start);a.setDate(a.getDate()-1);let names=[];let q=new Date(a.getFullYear(),a.getMonth(),1),stop=new Date(end.getFullYear(),end.getMonth(),1);while(q<=stop&&names.length<3){names.push(MONTHS[q.getMonth()][0].toUpperCase()+MONTHS[q.getMonth()].slice(1));q.setMonth(q.getMonth()+1)}let years=a.getFullYear()===end.getFullYear()?String(end.getFullYear()):a.getFullYear()+'–'+end.getFullYear();return names.join(' – ')+' '+years}
+function civilRefForHebDay(d){let prev=new Date(d);prev.setDate(prev.getDate()-1);let sameMonth=prev.getMonth()===d.getMonth();if(sameMonth)return prev.getDate()+'–'+d.getDate()+' '+MONTHS[d.getMonth()];return prev.getDate()+' '+MONTHS[prev.getMonth()]+' – '+d.getDate()+' '+MONTHS[d.getMonth()]}
+view=hebMonthStart(view);
+
+function hebParts(d){try{let parts=new Intl.DateTimeFormat('en-u-ca-hebrew',{day:'numeric',month:'long',year:'numeric'}).formatToParts(d);let o={};for(const x of parts)o[x.type]=x.value;return {day:+o.day,month:o.month,year:+o.year}}catch(e){return null}}
+function nextHebrewSameDate(iso){let base=new Date(iso+'T12:00:00'),hp=hebParts(base);if(!hp)return null;for(let i=25;i<=35;i++){let q=new Date(base);q.setDate(q.getDate()+i);let x=hebParts(q);if(x&&x.day===hp.day&&!(x.month===hp.month&&x.year===hp.year))return q.toISOString().slice(0,10)}return null}
+function key(d,ona){return d.toISOString().slice(0,10)+'|'+ona}
+function previousOnaEvent(dateIso,ona,label,source){if(ona==='yom')return {date:dateIso,ona:'laila',type:'beinoni',auto:true,label:'Or Zarúa · '+label,orSource:source};let q=atNoon(dateIso);q.setDate(q.getDate()-1);return {date:localISO(q),ona:'yom',type:'beinoni',auto:true,label:'Or Zarúa · '+label,orSource:source};}
+function autoEvents(){
+ let out=[];let re=state.events.filter(e=>e.type==='reiya').sort((a,b)=>a.date.localeCompare(b.date));
+ // Si ya existe un patrón Kavúa matemáticamente establecido según las reglas configuradas,
+ // se suspenden los jashashot ordinarios de Beinonit / HaJódesh / Haflagá y se muestra
+ // únicamente la próxima oná proyectada por el Kavúa. Esto es un motor de seguimiento,
+ // no un psak; la tarjeta sigue indicando consultar Rab/Posek.
+ let kavua=activeKavuaPatterns();
+ if(kavua.length){
+   for(const p of kavua){
+     if(!p.projection||!p.ona)continue;
+     let no=state.events.find(e=>e.type==='kavua_no'&&e.date===p.projection&&e.ona===p.ona&&e.patternType===p.type);
+     out.push({date:p.projection,ona:p.ona,type:'pattern',auto:true,label:(no?'Kavúa · NO hubo Reiyá':'Kavúa · confirmar Reiyá'),pattern:p,confirmedNo:!!no});
+   }
+ }else{
+   // REGLA DE CANCELACIÓN: una nueva Reiyá anula los avisos pendientes de Oná Beinonit/día 31
+   // y la Haflagá proyectada que pertenecían a la Reiyá anterior. Por eso solo calculamos
+   // estos jashashot a partir de la Reiyá más reciente.
+   if(re.length){
+     let r=re[re.length-1];let d=new Date(r.date+'T12:00:00');
+     let b=new Date(d);b.setDate(b.getDate()+29);
+     let bIso=localISO(b);
+     out.push({date:bIso,ona:r.ona,type:'beinoni',auto:true,label:'Oná Beinonit · día 30'});
+     if(state.settings.orBeinoni)out.push(previousOnaEvent(bIso,r.ona,'Oná Beinonit','beinoni'));
+     if(state.settings.d31){let c=new Date(d);c.setDate(c.getDate()+30);out.push({date:localISO(c),ona:r.ona,type:'beinoni',auto:true,label:'Creti Upleti · día 31'});}
+     let j=nextHebrewSameDate(r.date);if(j){out.push({date:j,ona:r.ona,type:'jodesh',auto:true,label:'Onat HaJódesh'});if(state.settings.orJodesh)out.push(previousOnaEvent(j,r.ona,'Yom HaJódesh','jodesh'));}
+   }
+   if(re.length>=2){let a=atNoon(re[re.length-2].date),b=atNoon(re[re.length-1].date);let n=Math.round((b-a)/8
