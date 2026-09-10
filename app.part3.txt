@@ -1,0 +1,76 @@
+6400000)+1;let nx=new Date(b);nx.setDate(nx.getDate()+n-1);let hIso=localISO(nx),hOna=re[re.length-1].ona;out.push({date:hIso,ona:hOna,type:'haflaga',auto:true,label:'Haflagá vigente · '+n+' días'});if(state.settings.orHaflaga)out.push(previousOnaEvent(hIso,hOna,'Haflagá','haflaga'));}
+ }
+ for(const h of state.events.filter(e=>e.type==='hefsek')){let d=atNoon(h.date);for(let i=1;i<=7;i++){let q=new Date(d);q.setDate(q.getDate()+i);out.push({date:localISO(q),ona:'yom',type:'clean',auto:true,label:'Shivá Nekiim · '+i});}let t=new Date(d);t.setDate(t.getDate()+7);out.push({date:localISO(t),ona:'laila',type:'tevila',auto:true,label:'Tevilá'});}
+ return out;
+}
+function allEvents(){return [...state.events,...autoEvents()]}
+const cls=t=>({reiya:'red',ketem:'pink',beinoni:'orange',hefsek:'green',clean:'white',tevila:'blue',jodesh:'yellow',haflaga:'yellow',note:'white',symptom:'white',pattern:'purple',kavua_no:'purple'}[t]||'white');
+function escapeHtml(v){return String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));}
+
+function dayDiff(a,b){return Math.round((atNoon(b)-atNoon(a))/86400000)}
+function sameOna(arr){return arr.length>0&&arr.every(r=>r.ona===arr[0].ona)}
+function immediateNextHebMonthTarget(iso,targetDay){
+ let base=atNoon(iso),start=hebMonthStart(base),next=nextHebMonthStart(start),after=nextHebMonthStart(next),days=Math.round((after-next)/86400000);
+ if(targetDay<1||targetDay>days)return null;
+ let q=new Date(next);q.setDate(q.getDate()+targetDay-1);return localISO(q);
+}
+function consecutiveHebMonths(arr){
+ if(arr.length<2)return true;
+ for(let i=0;i<arr.length-1;i++){
+   let a=hebMonthStart(atNoon(arr[i].date)),b=hebMonthStart(atNoon(arr[i+1].date)),nx=nextHebMonthStart(a);
+   if(localISO(nx)!==localISO(b))return false;
+ }
+ return true;
+}
+function deltaName(k){let a=Math.abs(k);return a===1?'Yom':a===2?'Yomaim':'Yamim'}
+function possiblePatterns(){
+ let out=[];let re=state.events.filter(e=>e.type==='reiya').sort((a,b)=>a.date.localeCompare(b.date)||a.ona.localeCompare(b.ona));
+ const add=(type,title,detail,projection,ona,meta={})=>out.push({type,title,detail,projection,ona,...meta});
+ // Veset Hashavúa: 3 Reiyot en el mismo día de la semana y en la misma oná,
+ // pero cada Reiyá debe corresponder a un ciclo distinto con una separación razonable.
+ // La ventana es configurable (por defecto 20–40 días). La próxima alerta NO es a 7 días:
+ // se proyecta al mismo día de la semana más cercano a ~30 días después (normalmente 28 días).
+ if(re.length>=3){
+   let x=re.slice(-3),ds=x.map(r=>atNoon(r.date).getDay());
+   let gaps=[dayDiff(x[0].date,x[1].date),dayDiff(x[1].date,x[2].date)];
+   let hMin=Math.max(1,+state.settings.hashMin||20),hMax=Math.max(hMin,+state.settings.hashMax||40);
+   let reasonable=gaps.every(g=>g>=hMin&&g<=hMax);
+   if(sameOna(x)&&ds[0]===ds[1]&&ds[1]===ds[2]&&reasonable){
+     let candidates=[];for(let k=7;k<=91;k+=7)if(k>=hMin&&k<=hMax)candidates.push(k);
+     if(candidates.length){
+       let step=candidates.sort((a,b)=>Math.abs(a-30)-Math.abs(b-30)||a-b)[0];
+       let nx=atNoon(x[2].date);nx.setDate(nx.getDate()+step);
+       add('hashavua','Posible Veset HaShavúa Kavúa','Las últimas 3 Reiyot fueron en '+['domingo','lunes','martes','miércoles','jueves','viernes','Shabat'][ds[2]]+', en la misma oná, y separadas por ciclos razonables ('+gaps.join(' y ')+' días; ventana '+hMin+'–'+hMax+'). Próxima alerta: '+step+' días después, nuevamente '+['domingo','lunes','martes','miércoles','jueves','viernes','Shabat'][ds[2]]+' en la misma oná.',localISO(nx),x[2].ona,{step:step,gaps:gaps,window:[hMin,hMax]});
+     }
+   }
+ }
+ // Haflagá: requiere 4 Reiyot para obtener 3 Haflagot, siempre manteniendo la misma oná.
+ // Se acepta Kavúa fijo o Bedilug con cambio CONSTANTE (+/-1, +/-2, +/-3...).
+ // No se acepta por ahora una secuencia progresiva de cambios (+1,+2,+3 o -1,-2,-3).
+ if(re.length>=4){
+   let x=re.slice(-4);
+   if(sameOna(x)){
+     let ints=[1+dayDiff(x[0].date,x[1].date),1+dayDiff(x[1].date,x[2].date),1+dayDiff(x[2].date,x[3].date)];
+     if(ints[0]===ints[1]&&ints[1]===ints[2]){
+       let nextInt=ints[2],nx=atNoon(x[3].date);nx.setDate(nx.getDate()+nextInt-1);
+       add('haflaga-kavua','Posible Veset Haflagá Kavúa','4 Reiyot produjeron 3 haflagot consecutivas iguales, en la misma oná: '+ints.join(' → ')+'.',localISO(nx),x[3].ona,{interval:nextInt,delta:0});
+     }else{
+       let d1=ints[1]-ints[0],d2=ints[2]-ints[1];
+       if(d1!==0&&d1===d2){
+         let nextInt=ints[2]+d1;
+         if(nextInt>0){let nx=atNoon(x[3].date);nx.setDate(nx.getDate()+nextInt-1);let dir=d1>0?'Kadima':'Lemafreá';add('haflaga-dilug-'+(d1>0?'kadima':'lemafre'),'Posible Veset Haflagá Bedilug '+dir,'Las 3 haflagot mantienen la misma oná y cambian '+(d1>0?'hacia adelante ':'hacia atrás ')+Math.abs(d1)+' día(s) cada vez: '+ints.join(' → ')+'. Próxima haflagá proyectada: '+nextInt+' días.',localISO(nx),x[3].ona,{interval:nextInt,delta:d1});}
+       }
+     }
+   }
+ }
+ // HaJódesh: calendario hebreo, meses hebreos consecutivos y misma oná.
+ // 3 Reiyot bastan para patrón fijo o Bedilug constante. Para secuencia progresiva
+ // de saltos +/-1, +/-2, +/-3 se requieren 4 Reiyot.
+ if(re.length>=3){
+   let x=re.slice(-3),hp=x.map(r=>hebParts(atNoon(r.date)));
+   if(hp.every(Boolean)&&sameOna(x)&&consecutiveHebMonths(x)){
+     let days=hp.map(z=>z.day),d1=days[1]-days[0],d2=days[2]-days[1];
+     if(d1===0&&d2===0){let nx=immediateNextHebMonthTarget(x[2].date,days[2]);if(nx)add('jodesh-kavua','Posible Veset HaJódesh Kavúa','Las últimas 3 Reiyot fueron el día '+days[2]+' del mes hebreo, en la misma oná.',nx,x[2].ona,{targetDay:days[2],delta:0});}
+     else if(d1!==0&&d1===d2){
+       let target=days[2]+d1,nx=immediateNextHebMonthTarget(x[2].date,target);
+       if(nx){let dir=d1>0?'Kadima':'Lemafreá',nm=deltaName(d1);add('jodesh-dilug-'+(d1>0?'kadima':'lemafre')+'-'+Math.abs(d1),'Posible Veset HaJódesh Bedilug '+dir+' · '+nm,'Días hebreos, misma oná: '+days
