@@ -1,0 +1,61 @@
+.join(' → ')+'. El salto se repite '+(d1>0?'+':'')+d1+' cada mes. Próximo día proyectado: '+target+'.',nx,x[2].ona,{targetDay:target,delta:d1});}
+     }
+   }
+ }
+ if(re.length>=4){
+   let x=re.slice(-4),hp=x.map(r=>hebParts(atNoon(r.date)));
+   if(hp.every(Boolean)&&sameOna(x)&&consecutiveHebMonths(x)){
+     let days=hp.map(z=>z.day),ds=[days[1]-days[0],days[2]-days[1],days[3]-days[2]];
+     let progressiveForward=ds[0]===1&&ds[1]===2&&ds[2]===3;
+     let progressiveBack=ds[0]===-1&&ds[1]===-2&&ds[2]===-3;
+     if(progressiveForward||progressiveBack){let nextDelta=progressiveForward?4:-4,target=days[3]+nextDelta,nx=immediateNextHebMonthTarget(x[3].date,target);if(nx){let dir=progressiveForward?'Kadima':'Lemafreá';add('jodesh-dilug-progressive-'+(progressiveForward?'kadima':'lemafre'),'Posible Veset HaJódesh Bedilug '+dir+' · Yamim','Secuencia progresiva de días hebreos en la misma oná: '+days.join(' → ')+'. Los saltos fueron '+ds.map(v=>(v>0?'+':'')+v).join(', ')+'. Próximo salto proyectado: '+(nextDelta>0?'+':'')+nextDelta+' → día '+target+'.',nx,x[3].ona,{targetDay:target,delta:nextDelta,progressive:true});}}
+   }
+ }
+ // Veset Haguf: mismo síntoma 24 h antes de 3 Reiyot. Se conserva como detector separado.
+ let symptomHits=[];for(const r of re){let prev=atNoon(r.date);prev.setDate(prev.getDate()-1);let pi=localISO(prev);for(const e of state.events.filter(e=>e.type==='symptom'&&e.date===pi)){symptomHits.push({reiya:r,s:e});}}
+ if(symptomHits.length>=3){let z=symptomHits.slice(-3),names=z.map(v=>(v.s.symptom||v.s.label||'').trim().toLowerCase());if(names[0]&&names[0]===names[1]&&names[1]===names[2]&&sameOna(z.map(v=>v.reiya)))add('haguf','Posible Veset Haguf','El mismo síntoma (“'+(z[2].s.symptom||z[2].s.label)+'”) fue registrado 24 h antes de 3 Reiyot, manteniendo la oná correspondiente.',null,z[2].reiya.ona);}
+ // Mimaayán Patuaj: continuidad automática Reiyá → Hefsek, como ya estaba definido.
+ if(re.length>=3){
+   let x=re.slice(-3),h=x.map(r=>hebParts(atNoon(r.date)));
+   if(h.every(Boolean)&&sameOna(x)&&h[0].day===h[1].day&&h[2].day<h[1].day){
+     let D=h[1].day,third=x[2];
+     let linked=state.events.filter(e=>e.type==='hefsek'&&e.reiyaId===third.id).sort((a,b)=>a.date.localeCompare(b.date))[0];
+     let fallback=state.events.filter(e=>e.type==='hefsek'&&e.date>=third.date).sort((a,b)=>a.date.localeCompare(b.date))[0];
+     let hef=linked||fallback||null,end=hef?atNoon(hef.date):new Date();end.setHours(12,0,0,0),touches=false;
+     for(let q=atNoon(third.date);q<=end;q.setDate(q.getDate()+1)){let z=hebParts(q);if(z&&z.day===D){touches=true;break}}
+     if(touches)add('mimaayan','Posible Veset Mimaayán Patuaj','Dos ciclos anteriores comenzaron el día hebreo '+D+'; en el último, la Reiyá comenzó el día '+h[2].day+' y la continuidad hasta el Hefsek volvió a tocar el día '+D+'.',null,third.ona);
+   }
+ }
+ return out;
+}
+function activeKavuaPatterns(){
+ // Patrones que, según las reglas ingresadas por el usuario, ya alcanzaron el umbral matemático de Kavúa.
+ // Haguf y Mimaayán siguen mostrándose como posibles patrones informativos y no suspenden jashashot ordinarios aquí.
+ return possiblePatterns().filter(p=>p.projection&&['hashavua','haflaga-kavua','haflaga-dilug-kadima','haflaga-dilug-lemafre'].includes(p.type)|| (p.projection&&p.type.startsWith('jodesh-')));
+}
+function renderPatterns(){
+ let box=document.getElementById('patterns');if(!box)return;let ps=possiblePatterns(),active=activeKavuaPatterns();
+ if(!ps.length){box.innerHTML='<div class="patternEmpty">Todavía no hay suficientes coincidencias para mostrar un posible patrón.</div>';return;}
+ let intro=active.length?'<div class="kavuaStatus"><span class="tag">KAVÚA DETECTADO</span><br>Mientras este patrón esté activo, el calendario oculta Oná Beinonit, HaJódesh ordinario y Haflagá ordinaria, y marca la próxima oná proyectada para confirmar si hubo Reiyá. <b>Seguimiento matemático; consultar Rab/Posek.</b></div>':'';
+ box.innerHTML=intro+ps.map(p=>'<div class="patternAlert"><b>⚠️ '+p.title+'</b><br>'+p.detail+(p.projection?'<br><b>Próxima fecha a revisar:</b> '+p.projection+' · '+(p.ona==='laila'?'Laila':'Yom'):'')+'<br><span class="notice">Posible patrón solamente — consultar Rab/Posek.</span></div>').join('');
+}
+
+function render(){
+ let first=hebMonthStart(view), next=nextHebMonthStart(first), last=new Date(next);last.setDate(last.getDate()-1);
+ let hp0=hebParts(first), days=Math.round((next-first)/86400000);
+ document.getElementById('month').innerHTML='<div class="hm">'+hMonthEs(hp0?hp0.month:'Mes hebreo').toUpperCase()+'</div><div class="gm">'+civilMonthSpan(first,last)+'</div><div class="daysCount">'+days+' días</div>';
+ let g=document.getElementById('grid');g.innerHTML='';let ev=allEvents();
+ // El calendario mostrado es el mes HEBREO. Los huecos solo alinean el día de la semana.
+ for(let z=0;z<first.getDay();z++){let blank=document.createElement('div');blank.className='day out';blank.style.visibility='hidden';g.appendChild(blank)}
+ for(let i=0;i<days;i++){
+   let d=new Date(first);d.setDate(first.getDate()+i);let iso=localISO(d),hp=hebParts(d);
+   let box=document.createElement('div');box.className='day';
+   let dd=document.createElement('div');dd.className='date';dd.innerHTML='<div class="hday">'+(hp?hp.day:(i+1))+' '+hMonthEs(hp?hp.month:'')+'</div><div class="civil">'+civilRefForHebDay(d)+'</div>';box.appendChild(dd);
+   // ESTILO DE CALENDARIO FÍSICO: Yom del día hebreo arriba.
+   // La Laila que aparece debajo comienza esa tarde y pertenece al DÍA HEBREO SIGUIENTE.
+   // Por eso cualquier registro hecho en esa Laila se guarda con la fecha absoluta/hebreo del día siguiente.
+   [['yom',d],['laila',(()=>{let q=new Date(d);q.setDate(q.getDate()+1);return q})()]].forEach(pair=>{
+     let o=pair[0], eventDate=pair[1], eventIso=localISO(eventDate), eventHp=hebParts(eventDate);
+     let el=document.createElement('div');
+     let es=ev.filter(x=>x.date===eventIso&&x.ona===o);
+     let alerts=es.filter(x=>['beinoni','jodesh','hafl
