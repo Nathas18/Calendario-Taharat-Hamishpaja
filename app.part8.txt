@@ -1,0 +1,83 @@
+vent(ev){
+ state.events=state.events.filter(e=>e.id!==ev.id);
+ save();document.getElementById('modal').style.display='none';selected=null;render();
+}
+function removeReiya(ev){
+ // Al eliminar una Reiyá también se elimina el Hefsek perteneciente a ese ciclo.
+ // Shivá Nekiim y Tevilá son automáticos a partir del Hefsek, por lo que desaparecen al mismo tiempo.
+ const reiyot=state.events.filter(e=>e.type==='reiya').sort((a,b)=>a.date.localeCompare(b.date));
+ const idx=reiyot.findIndex(r=>(ev.id&&r.id===ev.id)||(!ev.id&&r.date===ev.date&&r.ona===ev.ona));
+ const nextReiya=idx>=0 && idx<reiyot.length-1 ? reiyot[idx+1] : null;
+ const targetDate=ev.date || (selected&&selected.date);
+ const targetId=ev.id;
+
+ state.events=state.events.filter(e=>{
+   // 1) eliminar la propia Reiyá
+   if(e.type==='reiya'){
+     if(targetId && e.id===targetId) return false;
+     if(e.date===targetDate && e.ona===ev.ona) return false;
+   }
+   // 2) eliminar Hefsek ligado explícitamente a esta Reiyá
+   if(e.type==='hefsek' && targetId && e.reiyaId===targetId) return false;
+   // 3) respaldo para registros viejos: Hefsek posterior a esta Reiyá y anterior a la siguiente Reiyá
+   if(e.type==='hefsek' && !e.reiyaId && targetDate && e.date>=targetDate && (!nextReiya || e.date<nextReiya.date)) return false;
+   return true;
+ });
+ save();
+ document.getElementById('modal').style.display='none';
+ selected=null;
+ render();
+}
+function renderEvents(){let e=document.getElementById('events'),arr=allEvents().sort((a,b)=>a.date.localeCompare(b.date)).slice(-20);e.innerHTML=arr.length?arr.map(x=>'<div><i class="dot '+cls(x.type)+'"></i> <b>'+x.date+'</b> · '+(x.ona==='yom'?'Yom':'Laila')+' · '+x.label+(x.auto?' <small>(automático)</small>':'')+'</div>').join(''):'<div>Aún no hay registros.</div>'}
+function syncControls(){
+ const d=defaultState().settings;state.settings={...d,...(state.settings||{})};
+ document.getElementById('wait').value=state.settings.wait;
+ document.getElementById('d31').checked=!!state.settings.d31;
+ document.getElementById('orJodesh').checked=!!state.settings.orJodesh;
+ document.getElementById('orBeinoni').checked=!!state.settings.orBeinoni;
+ document.getElementById('orHaflaga').checked=!!state.settings.orHaflaga;
+ document.getElementById('hashMin').value=state.settings.hashMin;
+ document.getElementById('hashMax').value=state.settings.hashMax;
+}
+async function loadPrivateState(){
+ try{
+   const data=await loadSettingsRemote();
+   if(data&&data.settings){state={...defaultState(),...data.settings,settings:{...defaultState().settings,...(data.settings.settings||{})}};}
+   else{state=defaultState();await saveSettingsRemote(state);}
+ }catch(error){console.error(error);state=defaultState();}
+}
+function showSignedOut(msg=''){
+ currentUser=null;state=defaultState();document.getElementById('appMain').style.display='none';document.getElementById('userBar').style.display='none';document.getElementById('authWrap').style.display='block';document.getElementById('authMsg').textContent=msg;
+}
+async function showSignedIn(user){
+ currentUser=user;document.getElementById('authWrap').style.display='none';document.getElementById('userBar').style.display='flex';document.getElementById('userEmail').textContent=user.email||'';await loadPrivateState();syncControls();document.getElementById('appMain').style.display='block';render();
+}
+async function bootAuth(){
+ const session=await validSession();
+ if(session?.user)await showSignedIn(session.user);else showSignedOut();
+ authListeners.push(async(event,session)=>{if(session?.user)await showSignedIn(session.user);else showSignedOut(event==='SIGNED_OUT'?'Sesión cerrada.':'');});
+}
+async function authAction(mode){
+ const email=document.getElementById('authEmail').value.trim();const password=document.getElementById('authPassword').value;const msg=document.getElementById('authMsg');
+ if(!email||password.length<6){msg.textContent='Escribe un correo válido y una contraseña de al menos 6 caracteres.';return;}
+ msg.textContent=mode==='signup'?'Creando cuenta…':'Iniciando sesión…';
+ try{
+   const res=mode==='signup'?await authSignUp(email,password):await authSignIn(email,password);
+   if(mode==='signup'&&!res.session)msg.textContent='Cuenta creada. Revisa tu correo para confirmar y después inicia sesión.';
+ }catch(error){msg.textContent=error.message||'No se pudo completar la operación.';}
+}
+document.getElementById('loginBtn').onclick=()=>authAction('login');
+document.getElementById('signupBtn').onclick=()=>authAction('signup');
+document.getElementById('logoutBtn').onclick=()=>authSignOut();
+document.getElementById('prev').onclick=()=>{view=prevHebMonthStart(hebMonthStart(view));render()};
+document.getElementById('next').onclick=()=>{view=nextHebMonthStart(hebMonthStart(view));render()};
+document.getElementById('close').onclick=()=>document.getElementById('modal').style.display='none';
+['wait','d31','orJodesh','orBeinoni','orHaflaga','hashMin','hashMax'].forEach(id=>document.getElementById(id).onchange=()=>{state.settings.wait=+document.getElementById('wait').value;state.settings.d31=document.getElementById('d31').checked;state.settings.orJodesh=document.getElementById('orJodesh').checked;state.settings.orBeinoni=document.getElementById('orBeinoni').checked;state.settings.orHaflaga=document.getElementById('orHaflaga').checked;let mn=Math.max(1,+document.getElementById('hashMin').value||20),mx=Math.max(mn,+document.getElementById('hashMax').value||40);state.settings.hashMin=mn;state.settings.hashMax=mx;document.getElementById('hashMin').value=mn;document.getElementById('hashMax').value=mx;save();render()});
+document.getElementById('clear').onclick=()=>{if(confirm('¿Borrar todos tus datos del calendario?')){state.events=[];save();render()}};
+syncControls();bootAuth();
+
+
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js').catch(()=>{}));
+}
+
