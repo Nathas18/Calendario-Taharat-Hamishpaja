@@ -1,0 +1,78 @@
+o==='yom'){
+   const hefsekCycle=state.events.find(e=>e.type==='hefsek' && e.date===selected.date && e.ona==='yom');
+   // Un ciclo solo puede tener UN Hefsek Tahará. Si ya hay uno registrado para la
+   // Reiyá vigente, no se puede agregar otro ni antes ni después hasta eliminarlo.
+   const ctxForHefsek=getCycleContext(selected.date);
+   const existingCycleHefsek=ctxForHefsek.hefsek;
+   if(hefsekCycle){
+     let hi=document.createElement('div');hi.className='locked';hi.style.gridColumn='1 / -1';
+     hi.innerHTML='<b>🟢 Hefsek Tahará ya registrado</b><br>Solo puede existir un Hefsek Tahará para este ciclo. Si fue un error, puedes eliminarlo.';
+     c.appendChild(hi);
+     let delH=document.createElement('button');delH.className='danger';delH.style.gridColumn='1 / -1';delH.textContent='Eliminar este Hefsek Tahará';delH.onclick=()=>removeHefsek(hefsekCycle);c.appendChild(delH);
+   }else if(existingCycleHefsek){
+     let hi=document.createElement('div');hi.className='locked';hi.style.gridColumn='1 / -1';
+     hi.innerHTML='<b>🟢 Ya existe un Hefsek Tahará para esta Reiyá</b><br>Está registrado el <b>'+existingCycleHefsek.date+'</b>. No se puede agregar otro Hefsek en otro día del mismo ciclo hasta eliminar el ya registrado.';
+     c.appendChild(hi);
+   }else{
+     let hb=document.createElement('button');hb.className='choice';hb.textContent='🟢 Hefsek Tahará';hb.onclick=()=>add('hefsek','Hefsek Tahará');c.appendChild(hb);
+   }
+ }
+ if(!state.events.some(e=>e.type==='symptom'&&e.date===selected.date&&e.ona===selected.ona)){let sb=document.createElement('button');sb.className='choice';sb.textContent='🧠 Síntoma / Veset Haguf';sb.onclick=()=>showTextEntry('symptom');c.appendChild(sb);}
+ if(!state.events.some(e=>e.type==='note'&&e.date===selected.date&&e.ona===selected.ona)){let nb=document.createElement('button');nb.className='choice';nb.textContent='✍️ Nota';nb.onclick=()=>showTextEntry('note');c.appendChild(nb);}
+ document.getElementById('modal').style.display='flex'
+}
+function showTextEntry(type,existing=null){
+ const isSymptom=type==='symptom';
+ let c=document.getElementById('choices');c.style.display='block';c.innerHTML='';
+ let form=document.createElement('div');form.className='entryForm';
+ form.innerHTML='<label>'+(isSymptom?'Describe el síntoma':'Escribe la nota')+'</label><textarea id="entryText" placeholder="'+(isSymptom?'Ejemplo: dolor de cabeza, bostezo, dolor abdominal…':'Escribe aquí la nota antes de confirmar…')+'"></textarea><div class="entryActions"><button class="secondary" id="entryBack">Volver</button><button class="btn" id="entryConfirm">Confirmar</button></div>';
+ c.appendChild(form);
+ const ta=form.querySelector('#entryText'); if(existing){ta.value=isSymptom?(existing.symptom||existing.label.replace(/^Síntoma:\s*/,'')):(existing.note||existing.label.replace(/^Nota:\s*/,'')); form.querySelector('#entryConfirm').textContent='Guardar cambios';} setTimeout(()=>ta.focus(),0);
+ form.querySelector('#entryBack').onclick=()=>{let d=new Date(selected.date+'T12:00:00');openSheet(d,selected.ona)};
+ form.querySelector('#entryConfirm').onclick=()=>{
+   const txt=ta.value.trim();
+   if(!txt){ta.focus();ta.style.borderColor='#b3261e';return;}
+   if(existing){existing.label=(isSymptom?'Síntoma: ':'Nota: ')+txt;if(isSymptom)existing.symptom=txt;else existing.note=txt;}
+   else{let newEvent={...selected,type,label:(isSymptom?'Síntoma: ':'Nota: ')+txt,id:(crypto.randomUUID?crypto.randomUUID():Date.now()+'-'+Math.random())};if(isSymptom)newEvent.symptom=txt; else newEvent.note=txt;state.events.push(newEvent);}
+   save();document.getElementById('modal').style.display='none';render();
+ };
+}
+function add(type,label){
+ // Guardas de consistencia: aunque un botón quedara visible por una versión vieja,
+ // el motor no permite registrar Reiyá/Ketem en la misma Oná del Hefsek,
+ // ni Ketem durante el periodo abierto entre Reiyá y Hefsek.
+ if((type==='reiya'||type==='ketem') && isHefsekOna(selected.date,selected.ona)){
+   alert('En esta Oná ya está registrado el Hefsek Tahará. No se puede registrar Reiyá ni Ketem durante estas 12 horas.');return;
+ }
+ if(type==='ketem' && getCycleContext(selected.date).inBleedingWindow){
+   alert('No se puede registrar Ketem entre la Reiyá y su Hefsek Tahará. Esos días se consideran continuidad del sangrado.');return;
+ }
+ if(type==='hefsek'){
+   let existingH=state.events.find(e=>e.type==='hefsek'&&e.date===selected.date);
+   if(existingH){alert('Ya existe un Hefsek Tahará registrado en este día. Primero elimínalo si fue un error.');return;}
+   // Guardia de ciclo: no permitir un segundo Hefsek asociado a la misma Reiyá,
+   // aunque se intente registrar en un día anterior o posterior al ya guardado.
+   const ctx=getCycleContext(selected.date);
+   if(ctx.hefsek){
+     alert('Ya existe un Hefsek Tahará registrado para esta Reiyá ('+ctx.hefsek.date+'). Primero elimínalo para poder registrar otro.');return;
+   }
+ }
+ // Solo una Reiyá o un Ketem por día, y nunca ambos el mismo día.
+ if(type==='reiya'||type==='ketem'){
+   let existing=state.events.find(e=>(e.type==='reiya'||e.type==='ketem')&&e.date===selected.date);
+   if(existing){
+     alert(existing.type==='reiya'?'Ya existe una Reiyá registrada en este día. Primero elimínala si fue un error.':'Ya existe un Ketem registrado en este día. Primero elimínalo si fue un error.');return;
+   }
+ }
+ let newEvent={...selected,type,label,id:(crypto.randomUUID?crypto.randomUUID():Date.now()+'-'+Math.random())};
+ if(type==='hefsek'){
+   let prev=state.events.filter(e=>e.type==='reiya'&&e.date<=selected.date).sort((a,b)=>a.date.localeCompare(b.date)).pop();
+   if(prev) newEvent.reiyaId=prev.id;
+ }
+ state.events.push(newEvent);save();document.getElementById('modal').style.display='none';render()
+}
+function removeHefsek(ev){
+ state.events=state.events.filter(e=>!(e.type==='hefsek' && ((ev.id&&e.id===ev.id)||(!ev.id&&e.date===ev.date))));
+ save();document.getElementById('modal').style.display='none';selected=null;render();
+}
+function removeE
