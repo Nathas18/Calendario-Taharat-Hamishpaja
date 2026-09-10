@@ -1,0 +1,77 @@
+()=>add('reiya','Reiyá');
+   wrap.querySelector('#kNo').onclick=()=>{
+     let p=pat.pattern||{};state.events.push({...selected,type:'kavua_no',label:'Kavúa: no hubo Reiyá',patternType:p.type||'kavua',id:(crypto.randomUUID?crypto.randomUUID():Date.now()+'-'+Math.random())});
+     save();document.getElementById('modal').style.display='none';render();
+   };
+ }
+ if(pat&&pat.confirmedNo){let n=document.createElement('div');n.className='locked';n.innerHTML='<b>✓ Confirmado:</b> no hubo Reiyá en esta oná proyectada. Este dato quedó guardado. La regla para desestablecer o continuar el Kavúa después de un “NO” se definirá por separado para no asumir Halajá.';c.appendChild(n);}
+ if(ketemDay){
+   let k=document.createElement('div');k.className='locked';k.innerHTML='<b>🩷 Ketem registrado en este día</b><br>Si fue un error, puedes eliminarlo aquí.';c.appendChild(k);
+   let dk=document.createElement('button');dk.className='miniDanger';dk.textContent='Eliminar este Ketem';dk.onclick=()=>removeEvent(ketemDay);c.appendChild(dk);
+ }
+ if(hefsekHere){let h=document.createElement('div');h.className='locked';h.innerHTML='<b>🟢 Hefsek Tahará registrado en esta Oná</b><br>Durante estas 12 horas no se puede registrar Reiyá ni Ketem.';c.appendChild(h);}
+ else if(!pat&&!reiyaDay&&!ketemDay){
+   let actionWrap=document.createElement('div');actionWrap.style.marginTop='12px';
+   let hint=document.createElement('div');hint.className='notice';hint.style.marginBottom='7px';hint.textContent='Si comenzó una nueva Reiyá durante esta oná, puedes registrarla aquí. Los avisos anteriores se recalcularán automáticamente.';actionWrap.appendChild(hint);
+   let addReiya=document.createElement('button');addReiya.className='danger';addReiya.textContent='🔴 Registrar Reiyá en esta Oná';addReiya.onclick=()=>add('reiya','Reiyá');actionWrap.appendChild(addReiya);c.appendChild(actionWrap);
+ }
+ document.getElementById('modal').style.display='flex';
+}
+function addEditableRecords(c,date,ona){
+ const records=state.events.filter(e=>e.date===date&&e.ona===ona&&(e.type==='symptom'||e.type==='note'));
+ records.forEach(ev=>{
+   let card=document.createElement('div');card.className='recordCard';card.style.gridColumn='1 / -1';
+   const raw=ev.type==='symptom'?(ev.symptom||ev.label.replace(/^Síntoma:\s*/,'')):(ev.note||ev.label.replace(/^Nota:\s*/,''));
+   card.innerHTML='<b>'+(ev.type==='symptom'?'🧠 Síntoma / Veset Haguf':'✍️ Nota')+'</b><div>'+escapeHtml(raw)+'</div>';
+   let actions=document.createElement('div');actions.className='recordActions';
+   let edit=document.createElement('button');edit.className='miniBtn';edit.textContent='Modificar';edit.onclick=()=>showTextEntry(ev.type,ev);
+   let del=document.createElement('button');del.className='miniDanger';del.textContent='Eliminar';del.onclick=()=>removeEvent(ev);
+   actions.appendChild(edit);actions.appendChild(del);card.appendChild(actions);c.appendChild(card);
+ });
+}
+function openSheet(d,o){
+ selected={date:d.toISOString().slice(0,10),ona:o};
+ document.getElementById('selTitle').textContent=d.toLocaleDateString('es-MX',{weekday:'long',day:'numeric',month:'long'})+' · '+(o==='yom'?'Onat Yom':'Onat Laila');
+ document.getElementById('selSub').textContent=heb(d);
+ let c=document.getElementById('choices');c.innerHTML='';
+ // REIYÁ bloquea el día completo para registros principales, como ya acordamos.
+ let reiyaDay=state.events.find(e=>e.type==='reiya'&&e.date===selected.date);
+ if(reiyaDay){
+   c.style.display='block';
+   let msg=document.createElement('div');msg.className='locked';
+   msg.innerHTML='<b>🔒 Día bloqueado por Reiyá</b><br>Ya hay una Reiyá registrada en '+(reiyaDay.ona==='yom'?'Onat Yom':'Onat Laila')+'. Para evitar errores no se puede agregar Ketem, otra Reiyá ni Hefsek en este día.';
+   c.appendChild(msg);
+   let del=document.createElement('button');del.className='danger';del.textContent='Eliminar / cancelar esta Reiyá';
+   del.onclick=()=>removeReiya(reiyaDay);
+   c.appendChild(del);
+   document.getElementById('modal').style.display='flex';return;
+ }
+ c.style.display='grid';
+ addEditableRecords(c,selected.date,selected.ona);
+ const ketemDay=state.events.find(e=>e.type==='ketem'&&e.date===selected.date);
+ const hefsekHere=isHefsekOna(selected.date,selected.ona);
+ const cycleCtx=getCycleContext(selected.date);
+ // Solo puede existir un Ketem por día y nunca puede coexistir con una Reiyá.
+ // Además, desde una Reiyá y hasta su Hefsek (inclusive) no se permite registrar Ketem.
+ // En la Onat Yom donde se registró Hefsek, tampoco se ofrece Reiyá durante esas 12 horas.
+ if(hefsekHere){
+   let info=document.createElement('div');info.className='locked';info.style.gridColumn='1 / -1';
+   info.innerHTML='<b>🟢 Hefsek Tahará en esta Oná</b><br>Durante estas 12 horas no se puede registrar Reiyá ni Ketem.';
+   c.appendChild(info);
+ }else if(!ketemDay){
+   let rb=document.createElement('button');rb.className='choice';rb.textContent='🔴 Reiyá';rb.onclick=()=>add('reiya','Reiyá');c.appendChild(rb);
+   if(!cycleCtx.inBleedingWindow){
+     let kb=document.createElement('button');kb.className='choice';kb.textContent='🩷 Ketem';kb.onclick=()=>add('ketem','Ketem');c.appendChild(kb);
+   }else{
+     let ki=document.createElement('div');ki.className='locked';ki.style.gridColumn='1 / -1';
+     ki.innerHTML='<b>🩷 Ketem bloqueado</b><br>Este día está dentro del periodo comprendido entre la Reiyá y su Hefsek Tahará. El sistema lo considera continuidad del sangrado y no permite registrar Ketem.';
+     c.appendChild(ki);
+   }
+ }else{
+   let info=document.createElement('div');info.className='locked';info.style.gridColumn='1 / -1';
+   info.innerHTML='<b>🩷 Ketem ya registrado</b><br>Solo puede haber un Ketem por día. Si fue un error, elimínalo antes de registrar otro Ketem o una Reiyá.';
+   c.appendChild(info);
+   let delK=document.createElement('button');delK.className='danger';delK.style.gridColumn='1 / -1';delK.textContent='Eliminar este Ketem';delK.onclick=()=>removeEvent(ketemDay);
+   c.appendChild(delK);
+ }
+ if(
