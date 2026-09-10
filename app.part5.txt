@@ -1,0 +1,57 @@
+aga','pattern'].includes(x.type));
+     let manual=es.filter(x=>!['beinoni','jodesh','haflaga','pattern'].includes(x.type));
+     let holiday=holidayFor(eventDate);let holidayText=holiday?(o==='laila'?holiday.night:holiday.day):'';
+     el.className='ona '+o+(holidayText?' hasHoliday':'');
+     let textManual=manual.filter(x=>x.type==='note'||x.type==='symptom');let iconManual=manual.filter(x=>!['note','symptom'].includes(x.type));
+     let manualHtml=(textManual.length?'<div class="manualLines">'+textManual.map(x=>'<span class="manualLine '+x.type+'">'+(x.type==='symptom'?'Síntoma: ':'Nota: ')+escapeHtml(x.type==='symptom'?(x.symptom||x.label.replace(/^Síntoma:\s*/,'')):(x.note||x.label.replace(/^Nota:\s*/,'')))+'</span>').join('')+'</div>':'')+(iconManual.length?'<div style="margin-top:2px">'+iconManual.map(x=>'<i class="dot '+cls(x.type)+'" title="'+escapeHtml(x.label)+'"></i>').join('')+'</div>':'');
+     let holidayHtml=holidayText?'<div class="holidayLine '+(holiday&&holiday.yomtov?'yomtov':'')+'">'+escapeHtml(holidayText)+'</div>':'';
+     let nextLabel=(o==='laila'&&eventHp)?'<span class="nextHeb">→ '+eventHp.day+' '+hMonthEs(eventHp.month)+'</span><span class="nightArrow">↗</span>':'';
+     let onaHead='<div class="onaHead">'+(o==='yom'?'☀️ Yom':'🌙 Laila')+(o==='laila'?nerotFor(eventDate,o,holiday):'')+nextLabel+'</div>';
+     if(alerts.length){let hasP=alerts.some(x=>x.type==='pattern'),hasO=alerts.some(x=>x.type==='beinoni'),hasY=alerts.some(x=>x.type==='jodesh'||x.type==='haflaga');el.className+=' alert '+(hasP?'alert-purple':hasO&&hasY?'alert-mix':hasO?'alert-orange':'alert-yellow');let labels=alerts.map(x=>x.label.replace('Oná Beinonit · día 30','Oná Beinonit').replace('Haflagá vigente ·','Haflagá ·'));el.innerHTML=onaHead+holidayHtml+'<div class="alertLabels">'+labels.map(l=>'<span>'+l+'</span>').join('')+'</div>'+manualHtml;}
+     else{el.innerHTML=onaHead+holidayHtml+manualHtml;}
+     el.onclick=()=>alerts.length?openAlertDetails(eventDate,o,alerts):openSheet(eventDate,o);box.appendChild(el)
+   });g.appendChild(box)
+ }
+ renderEvents();renderPatterns();
+}
+function alertHalacha(a){
+ if(a.type==='pattern'){let p=a.pattern||{};return '<b>Patrón Kavúa detectado:</b> '+escapeHtml(p.title||'Kavúa')+'. Esta es la oná proyectada por el patrón. Confirma abajo si hubo Reiyá. <span class="notice">Seguimiento matemático; consultar Rab/Posek.</span>'; }
+ if(a.label.startsWith('Oná Beinonit'))return '<b>Halajá:</b> durante esta Oná la pareja debe separarse. Deberá revisarse con un <i>Ed</i> (Bediká). Si pasó la Oná y no se revisó, se encuentra <b>asurá (prohibida)</b> hasta que se revise y se encuentre limpia.';
+ if(a.label==='Onat HaJódesh')return '<b>Halajá:</b> corresponde a Yom HaJódesh, en la misma fecha hebrea y la misma Oná de la Reiyá anterior. Durante esta Oná debe cuidarse la separación y realizar la Bediká correspondiente.';
+ if(a.label.startsWith('Haflagá'))return '<b>Halajá:</b> corresponde al intervalo de Haflagá calculado desde las dos últimas Reiyot. Durante esta Oná debe cuidarse la separación y la Bediká correspondiente.';
+ if(a.label.startsWith('Or Zarúa'))return '<b>Aviso:</b> Or Zarúa corresponde a la <b>oná inmediatamente anterior (aprox. 12 horas antes)</b> del jashash indicado. Se configura por separado para Yom HaJódesh, Oná Beinonit y Haflagá.';
+ if(a.label.startsWith('Creti Upleti'))return '<b>Aviso:</b> corresponde al cuidado adicional del día 31, 24 horas después del día 30 y manteniendo la oná correspondiente.';
+ return 'Aviso de separación según el cálculo registrado.';
+}
+function getCycleContext(date){
+ // Devuelve la última Reiyá previa/igual y el Hefsek asociado (si existe).
+ const reiyot=state.events.filter(e=>e.type==='reiya'&&e.date<=date).sort((a,b)=>a.date.localeCompare(b.date));
+ const r=reiyot.length?reiyot[reiyot.length-1]:null;
+ if(!r)return {reiya:null,hefsek:null,inBleedingWindow:false};
+ const nextReiya=state.events.filter(e=>e.type==='reiya'&&e.date>r.date).sort((a,b)=>a.date.localeCompare(b.date))[0]||null;
+ let h=state.events.filter(e=>e.type==='hefsek' && ((r.id&&e.reiyaId===r.id)||(!e.reiyaId&&e.date>=r.date&&(!nextReiya||e.date<nextReiya.date))))
+   .sort((a,b)=>a.date.localeCompare(b.date))[0]||null;
+ // Desde la Reiyá hasta el Hefsek inclusive, el sistema considera continuidad del sangrado.
+ // Si todavía no existe Hefsek, continúa bloqueado desde la Reiyá hacia adelante.
+ const inWindow=date>=r.date && (!h || date<=h.date) && (!nextReiya || date<nextReiya.date);
+ return {reiya:r,hefsek:h,inBleedingWindow:inWindow};
+}
+function isHefsekOna(date,ona){
+ return ona==='yom' && state.events.some(e=>e.type==='hefsek'&&e.date===date&&e.ona==='yom');
+}
+function openAlertDetails(d,o,alerts){
+ selected={date:localISO(d),ona:o};
+ document.getElementById('selTitle').textContent='Avisos de '+(o==='yom'?'Onat Yom':'Onat Laila')+' · '+d.toLocaleDateString('es-MX',{weekday:'long',day:'numeric',month:'long'});
+ document.getElementById('selSub').textContent=heb(d);
+ let c=document.getElementById('choices');c.style.display='block';c.innerHTML='';
+ alerts.forEach(a=>{let x=document.createElement('div');x.className='alertDetail';x.innerHTML='<h4>'+escapeHtml(a.label)+'</h4>'+alertHalacha(a);c.appendChild(x)});
+ addEditableRecords(c,selected.date,selected.ona);
+ const pat=alerts.find(a=>a.type==='pattern');
+ let reiyaDay=state.events.find(e=>e.type==='reiya'&&e.date===selected.date);
+ let ketemDay=state.events.find(e=>e.type==='ketem'&&e.date===selected.date);
+ const hefsekHere=isHefsekOna(selected.date,selected.ona);
+ if(pat&&!pat.confirmedNo&&!reiyaDay&&!ketemDay&&!hefsekHere){
+   let wrap=document.createElement('div');wrap.className='kavuaStatus';
+   wrap.innerHTML='<span class="tag">CONFIRMAR KAVÚA</span><br><b>¿Hubo Reiyá en esta oná?</b><div class="confirmRow"><button class="yesBtn" id="kYes">SÍ · Registrar Reiyá</button><button class="noBtn" id="kNo">NO · No hubo Reiyá</button></div>';
+   c.appendChild(wrap);
+   wrap.querySelector('#kYes').onclick=
