@@ -1,0 +1,55 @@
+
+// Jumrá opcional: Haflagá Aruká / récord histórico.
+// Conserva la haflagá más larga registrada en todo el historial mientras no haya Kavúa.
+// Si la haflagá actual es más corta que el récord, se cuidan ambas.
+// Esta Jumrá NO genera Or Zarúa ni Creti Upleti para evitar una doble Jumrá.
+const _autoEventsBase=autoEvents;
+autoEvents=function(){
+  const out=_autoEventsBase();
+  if(!state.settings?.haflagaAruka)return out;
+  if(activeKavuaPatterns().length)return out;
+  const re=state.events.filter(e=>e.type==='reiya').sort((a,b)=>a.date.localeCompare(b.date)||a.ona.localeCompare(b.ona));
+  if(re.length<3)return out;
+  const intervals=[];
+  for(let i=1;i<re.length;i++)intervals.push(1+dayDiff(re[i-1].date,re[i].date));
+  const current=intervals[intervals.length-1];
+  const record=Math.max(...intervals);
+  if(!Number.isFinite(record)||record<=current)return out;
+  const last=re[re.length-1];
+  const target=atNoon(last.date);target.setDate(target.getDate()+record-1);
+  out.push({
+    date:localISO(target),
+    ona:last.ona,
+    type:'haflaga',
+    auto:true,
+    haflagaAruka:true,
+    recordInterval:record,
+    currentInterval:current,
+    label:'Haflagá Aruká · Jumrá récord · '+record+' días'
+  });
+  return out;
+};
+
+const _alertHalachaBase=alertHalacha;
+alertHalacha=function(a){
+  if(a&&a.haflagaAruka){
+    return '<b>Jumrá de Haflagá Aruká:</b> esta oná corresponde al récord histórico de Haflagá de <b>'+a.recordInterval+' días</b>, que se conserva aunque la Haflagá actual sea más corta. Se cuida además de la Haflagá actual mientras no haya un Kavúa. <b>No se agrega Or Zarúa ni Creti Upleti a esta Jumrá.</b>';
+  }
+  return _alertHalachaBase(a);
+};
+
+const _syncControlsBase=syncControls;
+syncControls=function(){
+  _syncControlsBase();
+  if(state.settings.haflagaAruka===undefined)state.settings.haflagaAruka=false;
+  const el=document.getElementById('haflagaAruka');
+  if(el)el.checked=!!state.settings.haflagaAruka;
+};
+
+const haflagaArukaControl=document.getElementById('haflagaAruka');
+if(haflagaArukaControl){
+  haflagaArukaControl.onchange=()=>{
+    state.settings.haflagaAruka=haflagaArukaControl.checked;
+    save();render();
+  };
+}
