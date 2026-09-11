@@ -1,9 +1,31 @@
 {
-  "name": "Calendario Tahará",
-  "short_name": "Tahará",
+  "id": "./",
+  "name": "Luaj Tahará",
+  "short_name": "Luaj Tahará",
+  "description": "Calendario privado de Taharat HaMishpajá con cuentas independientes y recordatorios configurables.",
+  "lang": "es-MX",
+  "dir": "ltr",
   "start_url": "./",
+  "scope": "./",
   "display": "standalone",
-  "background_color": "#f8f5f9",
-  "theme_color": "#7b4c82",
-  "lang": "es"
+  "display_override": ["window-controls-overlay", "standalone", "minimal-ui"],
+  "orientation": "any",
+  "background_color": "#f5fbfa",
+  "theme_color": "#42b8ad",
+  "categories": ["lifestyle", "health"],
+  "prefer_related_applications": false,
+  "icons": [
+    {
+      "src": "./icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "./icon-maskable.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    }
+  ]
 }
