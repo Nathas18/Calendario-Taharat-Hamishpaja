@@ -1,33 +1,69 @@
 
-// Reporte sencillo de errores para todos los usuarios.
-// Abre el cliente de correo del dispositivo con destinatario, asunto y contexto preparados.
+// Formulario visual de reporte de errores para todos los usuarios.
 // No adjunta ni envía automáticamente datos privados del calendario.
 (function addErrorReporting(){
   const REPORT_EMAIL='admcalendarioth@gmail.com';
   const main=document.getElementById('appMain');
   if(!main||document.getElementById('errorReportCard'))return;
+
+  const style=document.createElement('style');
+  style.textContent=`
+    .reportOverlay{display:none;position:fixed;inset:0;background:rgba(18,52,50,.48);z-index:10050;padding:18px;align-items:center;justify-content:center}
+    .reportOverlay.open{display:flex}
+    .reportSheet{width:min(620px,100%);max-height:90vh;overflow:auto;background:#fff;border:1px solid #dce9e7;border-radius:22px;padding:22px;box-shadow:0 24px 70px rgba(20,70,66,.22)}
+    .reportSheet h3{margin:0 0 6px;color:#173634;font-size:22px}
+    .reportSheet .reportIntro{color:#6b817f;font-size:14px;line-height:1.45;margin-bottom:18px}
+    .reportField{display:block;margin:0 0 16px;font-weight:700;color:#173634}
+    .reportField span{display:block;margin-bottom:7px}
+    .reportField input,.reportField textarea{box-sizing:border-box;width:100%;border:1px solid #cfe2df;border-radius:13px;background:#f8fcfb;color:#173634;font:inherit;padding:13px 14px;outline:none}
+    .reportField input:focus,.reportField textarea:focus{border-color:#42b8ad;box-shadow:0 0 0 3px rgba(66,184,173,.13);background:#fff}
+    .reportField textarea{min-height:170px;resize:vertical;line-height:1.5}
+    .reportActions{display:flex;gap:10px;flex-wrap:wrap;margin-top:6px}
+    .reportActions .btn{flex:1;min-width:145px}
+    .reportPrivacy{margin-top:13px;color:#6b817f;font-size:12px;line-height:1.4}
+    @media(max-width:600px){.reportOverlay{padding:10px;align-items:flex-end}.reportSheet{border-radius:20px 20px 12px 12px;padding:18px}.reportField textarea{min-height:190px}}
+  `;
+  document.head.appendChild(style);
+
   const card=document.createElement('div');
   card.className='card';
   card.id='errorReportCard';
   card.style.marginTop='14px';
-  card.innerHTML='<b>¿Detectaste un error?</b><div class="notice" style="margin-top:8px">Ayúdanos a mejorar Luaj Tahará. Describe qué error encontraste y, si puedes, qué estabas haciendo cuando apareció. No incluyas información privada que no sea necesaria.</div><button class="btn" id="reportErrorBtn" type="button" style="margin-top:10px">Reportar un error</button><div class="notice" style="margin-top:8px">El reporte será dirigido a <b>'+REPORT_EMAIL+'</b>.</div>';
+  card.innerHTML='<b>¿Detectaste un error?</b><div class="notice" style="margin-top:8px">Si encuentras algún problema en el calendario, repórtalo para que podamos revisarlo.</div><button class="btn" id="reportErrorBtn" type="button" style="margin-top:10px">Reportar un error</button><div class="notice" style="margin-top:8px">El reporte será dirigido a <b>'+REPORT_EMAIL+'</b>.</div>';
   main.appendChild(card);
-  const btn=card.querySelector('#reportErrorBtn');
-  btn.onclick=()=>{
-    const description=prompt('Describe el error que encontraste:');
-    if(description===null)return;
-    const clean=description.trim();
-    if(!clean){alert('Escribe una breve descripción del error antes de enviarlo.');return;}
+
+  const overlay=document.createElement('div');
+  overlay.className='reportOverlay';
+  overlay.id='reportErrorOverlay';
+  overlay.innerHTML=`<div class="reportSheet" role="dialog" aria-modal="true" aria-labelledby="reportTitle">
+    <h3 id="reportTitle">Reportar un error</h3>
+    <div class="reportIntro">Cuéntanos qué ocurrió para poder revisarlo y mejorar Luaj Tahará.</div>
+    <label class="reportField"><span>Nombre y apellido</span><input id="reportName" type="text" autocomplete="name" maxlength="120" placeholder="Escribe tu nombre y apellido"></label>
+    <label class="reportField"><span>Descripción del problema</span><textarea id="reportDescription" maxlength="4000" placeholder="Describe con detalle qué error encontraste, en qué parte del calendario ocurrió y qué estabas haciendo cuando apareció."></textarea></label>
+    <div class="reportActions"><button class="btn" id="sendErrorReport" type="button">Preparar correo y enviar</button><button class="btn" id="cancelErrorReport" type="button">Cancelar</button></div>
+    <div class="reportPrivacy">Por privacidad, no se adjunta automáticamente tu historial, Reiyot ni otros datos personales del calendario.</div>
+  </div>`;
+  document.body.appendChild(overlay);
+
+  const open=()=>{overlay.classList.add('open');setTimeout(()=>overlay.querySelector('#reportName').focus(),20)};
+  const close=()=>overlay.classList.remove('open');
+  card.querySelector('#reportErrorBtn').onclick=open;
+  overlay.querySelector('#cancelErrorReport').onclick=close;
+  overlay.addEventListener('click',e=>{if(e.target===overlay)close()});
+  document.addEventListener('keydown',e=>{if(e.key==='Escape'&&overlay.classList.contains('open'))close()});
+
+  overlay.querySelector('#sendErrorReport').onclick=()=>{
+    const name=overlay.querySelector('#reportName').value.trim();
+    const description=overlay.querySelector('#reportDescription').value.trim();
+    if(!name){alert('Escribe tu nombre y apellido.');overlay.querySelector('#reportName').focus();return;}
+    if(!description){alert('Describe el problema antes de enviarlo.');overlay.querySelector('#reportDescription').focus();return;}
     const subject='Reporte de error · Luaj Tahará';
     const body=[
-      'Hola, encontré el siguiente error en Luaj Tahará:',
-      '',clean,'',
-      'Información técnica:',
-      'Fecha: '+new Date().toLocaleString('es-MX'),
-      'Página: '+location.href.split('#')[0],
-      'Navegador: '+navigator.userAgent,
-      '',
-      'Por privacidad, el calendario y el historial personal NO se adjuntan automáticamente.'
+      'REPORTE DE ERROR · LUAJ TAHARÁ','',
+      'Nombre y apellido: '+name,'',
+      'Descripción del problema:',description,'',
+      'Información técnica:','Fecha: '+new Date().toLocaleString('es-MX'),'Página: '+location.href.split('#')[0],'Navegador: '+navigator.userAgent,'',
+      'Por privacidad, el calendario y el historial personal no se adjuntan automáticamente.'
     ].join('\n');
     location.href='mailto:'+REPORT_EMAIL+'?subject='+encodeURIComponent(subject)+'&body='+encodeURIComponent(body);
   };
