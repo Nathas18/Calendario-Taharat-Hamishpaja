@@ -1,0 +1,77 @@
+
+;(()=>{
+const LICENSE_OK=/^(Public Domain|CC0|CC-0|CC BY|CC-BY|CC BY-SA|CC-BY-SA)/i;
+const topics=[
+ {id:'ketamim',title:'Ketamim · manchas',icon:'🩸',desc:'Manchas, ropa, superficies y preguntas relacionadas.',refs:[{ref:"Shulchan Arukh, Yoreh De'ah 190",label:'Shulján Aruj · Yoré Deá 190'}],keys:['ketem','ketamim','mancha','manchas','toallita','toalla','protector','ropa interior','papel','sangre en']},
+ {id:'harjakot',title:'Harjakot · הרחקות',icon:'🤍',desc:'Conducta entre esposo y esposa durante Nidá.',refs:[{ref:"Shulchan Arukh, Yoreh De'ah 195",label:'Shulján Aruj · Yoré Deá 195'}],keys:['harjaka','harjakot','harchaka','harchakot','tocar','contacto','objeto','pasar','cama','mesa','comer juntos','esposo','esposa']},
+ {id:'hefsek',title:'Hefsek Tahará y Shivá Nekiim',icon:'🌿',desc:'Hefsek, Bedikot y los siete días limpios.',refs:[{ref:"Shulchan Arukh, Yoreh De'ah 196",label:'Shulján Aruj · Yoré Deá 196'}],keys:['hefsek','shivá','shiva','nekiim','limpios','bedika','bedikot','moj','moch']},
+ {id:'marot',title:'Marot · colores',icon:'🎨',desc:'Apariencias y colores relevantes en Hiljot Nidá.',refs:[{ref:"Shulchan Arukh, Yoreh De'ah 188",label:'Shulján Aruj · Yoré Deá 188'}],keys:['color','colores','marron','marrón','rojo','negro','amarillo','verde','apariencia']},
+ {id:'vesatot',title:'Vesatot y fechas de separación',icon:'📅',desc:'Veset, Oná y cálculos básicos de fechas.',refs:[{ref:"Shulchan Arukh, Yoreh De'ah 184",label:'Shulján Aruj · Yoré Deá 184'},{ref:"Shulchan Arukh, Yoreh De'ah 189",label:'Shulján Aruj · Yoré Deá 189'}],keys:['veset','vesatot','ona','oná','beinoni','beinonit','haflaga','haflagá','jodesh','jódesh','fecha']},
+ {id:'tevilah',title:'Tevilá y Jatzitzá',icon:'💧',desc:'Momento de la Tevilá, preparación y Jatzitzot.',refs:[{ref:"Shulchan Arukh, Yoreh De'ah 197",label:'Shulján Aruj · Yoré Deá 197'},{ref:"Shulchan Arukh, Yoreh De'ah 198",label:'Shulján Aruj · Yoré Deá 198'},{ref:"Shulchan Arukh, Yoreh De'ah 199",label:'Shulján Aruj · Yoré Deá 199'}],keys:['mikve','mikveh','tevilá','tevila','jatzitza','jatzitzá','chatzitza','uñas','maquillaje','cabello','lentes']},
+ {id:'relations',title:'Sangrado en situaciones especiales',icon:'❓',desc:'Casos que requieren ubicar la fuente correcta antes de responder.',refs:[{ref:"Shulchan Arukh, Yoreh De'ah 187",label:'Shulján Aruj · Yoré Deá 187'}],keys:['despues de relaciones','después de relaciones','despues de estar','después de estar','relaciones','tashmish']}
+];
+function esc(s){return String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));}
+function norm(s){return String(s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');}
+function scoreTopic(q,t){const n=norm(q);let s=0;for(const k of t.keys){const nk=norm(k);if(n.includes(nk))s+=nk.length>8?4:2;}return s;}
+function sefariaUrl(ref){return 'https://www.sefaria.org/'+encodeURIComponent(ref.replace(/ /g,'_'))+'?lang=bi';}
+function sourceCard(r){return `<div class="halSource" data-ref="${esc(r.ref)}"><div><b>${esc(r.label)}</b><div class="halLicense">Fuente clásica en Sefaria · el texto solo se mostrará si su versión declara una licencia reutilizable.</div></div><div class="halSourceBtns"><button class="halPreview btn" type="button">Ver fuente</button><a class="halOpen" target="_blank" rel="noopener noreferrer" href="${sefariaUrl(r.ref)}">Abrir en Sefaria ↗</a></div><div class="halExcerpt" hidden></div></div>`;}
+async function loadLicensedExcerpt(card){
+ const box=card.querySelector('.halExcerpt'); const btn=card.querySelector('.halPreview'); const ref=card.dataset.ref;
+ if(box.dataset.loaded==='1'){box.hidden=!box.hidden;return;}
+ btn.disabled=true;btn.textContent='Revisando licencia…';
+ try{
+   const index=ref.replace(/\.\d.*$/,'');
+   const vr=await fetch('https://www.sefaria.org/api/texts/versions/'+encodeURIComponent(index));
+   if(!vr.ok)throw new Error('versions');
+   const versions=await vr.json();
+   const allowed=(Array.isArray(versions)?versions:[]).filter(v=>LICENSE_OK.test(String(v.license||'')) && !/NC/i.test(String(v.license||'')));
+   const preferred=allowed.find(v=>String(v.language||v.languageFamilyName||'').toLowerCase().includes('hebrew'))||allowed[0];
+   if(!preferred){
+     box.innerHTML='<b>Referencia disponible.</b> No muestro el texto aquí porque no encontré una versión con licencia suficientemente clara para reutilizar. Puedes abrir la fuente directamente en Sefaria.';
+   }else{
+     const lang=(preferred.language||preferred.languageFamilyName||'hebrew').toString().toLowerCase();
+     const versionTitle=preferred.versionTitle||'';
+     const tr=await fetch('https://www.sefaria.org/api/v3/texts/'+encodeURIComponent(ref)+'?version='+encodeURIComponent(lang+'|'+versionTitle));
+     if(!tr.ok)throw new Error('text');
+     const data=await tr.json();
+     const v=(data.versions||[])[0];
+     const raw=v&&v.text; const txt=Array.isArray(raw)?raw.slice(0,2).join(' '):String(raw||'');
+     const clean=txt.replace(/<[^>]+>/g,' ').replace(/\s+/g,' ').trim().slice(0,900);
+     const lic=preferred.license||'Licencia permitida';
+     box.innerHTML=`<div class="halLicBadge">${esc(lic)}</div><div class="halHebrew" dir="rtl">${esc(clean||'Texto disponible en Sefaria.')}</div><div class="halAttrib">Edición: ${esc(versionTitle)} · Fuente consultada en vivo desde Sefaria. No se almacena una copia del libro en este sitio.</div>`;
+   }
+   box.dataset.loaded='1'; box.hidden=false;
+ }catch(e){
+   console.error('Sefaria',e);box.innerHTML='No pude consultar Sefaria en este momento. La referencia sigue disponible mediante “Abrir en Sefaria”.';box.dataset.loaded='1';box.hidden=false;
+ }finally{btn.disabled=false;btn.textContent='Ver fuente';}
+}
+function renderResults(q){
+ const out=document.getElementById('halResults'); if(!out)return;
+ const ranked=topics.map(t=>({t,s:scoreTopic(q,t)})).sort((a,b)=>b.s-a.s);
+ const hits=ranked.filter(x=>x.s>0).slice(0,3);
+ if(!q.trim()){out.innerHTML='<div class="halHint">Escribe una pregunta como: “vi sangre en una toallita”, “¿qué Harjakot hay?” o “olvidé una Bediká”. El buscador localizará primero las fuentes; no inventará un psak.</div>';return;}
+ if(!hits.length){out.innerHTML='<div class="halCaution"><b>No encontré una categoría suficientemente cercana.</b><br>Por seguridad no voy a fabricar una respuesta halájica. Prueba con otras palabras o consulta a un Rab/Posek.</div>';return;}
+ out.innerHTML=`<div class="halPreAnswer"><b>Fuentes que conviene revisar para esta pregunta</b><div>No doy todavía un psak automático: primero localizo las fuentes clásicas y verifico la licencia de la versión antes de mostrar texto.</div></div>`+hits.map(({t})=>`<div class="halResultTopic"><h3>${t.icon} ${esc(t.title)}</h3><p>${esc(t.desc)}</p>${t.refs.map(sourceCard).join('')}</div>`).join('');
+ out.querySelectorAll('.halPreview').forEach(b=>b.addEventListener('click',()=>loadLicensedExcerpt(b.closest('.halSource'))));
+}
+function init(){
+ const main=document.getElementById('appMain'); if(!main||document.getElementById('halajotView'))return;
+ const children=[...main.children];
+ const cal=document.createElement('section');cal.id='calendarView';
+ children.forEach(n=>cal.appendChild(n));
+ const nav=document.createElement('div');nav.className='mainTabs';nav.innerHTML='<button class="mainTab active" id="tabCalendar" type="button">📅 Calendario</button><button class="mainTab" id="tabHalajot" type="button">📖 Halajot</button>';
+ const hal=document.createElement('section');hal.id='halajotView';hal.hidden=true;
+ hal.innerHTML=`<div class="halHero"><div><div class="halEyebrow">Taharat HaMishpajá · Sefaradí</div><h2>Halajot prácticas</h2><p>Buscador de fuentes con prioridad sefaradí. Esta primera etapa consulta Sefaria sin copiar libros completos y bloquea texto cuya licencia no sea suficientemente clara.</p></div></div><div class="halSearchCard"><label for="halQuery">¿Qué quieres preguntar?</label><div class="halSearchRow"><input id="halQuery" type="search" placeholder="Ej. Vi sangre en una toallita diaria…" autocomplete="off"><button id="halSearchBtn" class="btn" type="button">Buscar fuentes</button></div><div class="halSmall">La herramienta localiza fuentes y ayuda a estudiar el caso. No sustituye un psak personal de un Rab/Posek.</div></div><div id="halResults" class="halResults"></div><div class="halTopics"><h3>Temas prácticos</h3><div class="halTopicGrid">${topics.map(t=>`<button class="halTopic" type="button" data-topic="${esc(t.id)}"><span>${t.icon}</span><b>${esc(t.title)}</b><small>${esc(t.desc)}</small></button>`).join('')}</div></div><div class="halPolicy"><b>Política de fuentes y copyright</b><p>No almacenamos automáticamente textos de Sefaria. Antes de mostrar un fragmento, se consulta la metadata de la versión y solo se permite Public Domain, CC0, CC-BY o CC-BY-SA; por prudencia se excluyen licencias NC, “unknown” y copyright no autorizado. Las fuentes modernas de Rab Ovadia Yosef זצ״ל, Rab David Yosef y material de Rab Mijael Peretz se incorporarán únicamente cuando tengamos una vía legal/autorizada para usarlas.</p></div>`;
+ const st=document.createElement('style');st.textContent=`
+.mainTabs{display:flex;gap:8px;margin:0 0 14px;position:sticky;top:76px;z-index:20;background:rgba(244,249,248,.9);backdrop-filter:blur(12px);padding:8px;border-radius:16px}.mainTab{border:1px solid #cfe3e0;background:#fff;color:#315d59;border-radius:12px;padding:10px 15px;font-weight:800;cursor:pointer}.mainTab.active{background:linear-gradient(135deg,#42b8ad,#258f87);color:#fff;border-color:transparent}.halHero{background:linear-gradient(135deg,#f7fffe,#e4f7f4);border:1px solid #cbe5e1;border-radius:20px;padding:22px;margin-bottom:14px}.halEyebrow{font-size:12px;font-weight:900;letter-spacing:.08em;text-transform:uppercase;color:#167c76}.halHero h2{margin:4px 0 6px;font-size:28px;color:#173634}.halHero p{margin:0;color:#5b7774;line-height:1.55}.halSearchCard,.halPolicy,.halResultTopic{background:#fff;border:1px solid #dce9e7;border-radius:18px;padding:18px;margin-bottom:14px;box-shadow:0 8px 24px rgba(23,96,90,.07)}.halSearchCard label{display:block;font-weight:900;margin-bottom:8px}.halSearchRow{display:flex;gap:8px}.halSearchRow input{flex:1;min-width:0;border:1px solid #bddbd7;border-radius:12px;padding:13px 14px;font-size:16px}.halSmall,.halHint,.halLicense,.halAttrib{font-size:12.5px;color:#708783;line-height:1.45}.halSmall{margin-top:8px}.halResults{margin:14px 0}.halHint,.halCaution,.halPreAnswer{padding:14px 16px;border-radius:14px;background:#f5fbfa;border:1px solid #d5e8e5}.halCaution{background:#fff8f8;border-color:#edc8cc;color:#7d3a42}.halPreAnswer{margin-bottom:12px}.halPreAnswer div{margin-top:4px;color:#607874}.halResultTopic h3{margin:0 0 6px;color:#0d5f5a}.halResultTopic p{margin:0 0 12px;color:#647b78}.halSource{border-top:1px solid #e4eeec;padding:12px 0}.halSource:first-of-type{border-top:0}.halSourceBtns{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}.halOpen{display:inline-flex;align-items:center;text-decoration:none;border:1px solid #b8d9d5;border-radius:10px;padding:9px 11px;color:#0d5f5a;font-weight:800}.halExcerpt{margin-top:10px;padding:12px;border-radius:12px;background:#f7fbfb;border:1px solid #dbe9e7}.halHebrew{font-size:18px;line-height:1.8;color:#223c39}.halLicBadge{display:inline-block;background:#e9f8f6;color:#0d5f5a;font-size:11px;font-weight:900;padding:4px 8px;border-radius:999px;margin-bottom:8px}.halAttrib{margin-top:8px}.halTopics h3{color:#173634}.halTopicGrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}.halTopic{background:#fff;border:1px solid #d8e8e6;border-radius:16px;padding:16px;text-align:left;cursor:pointer;color:#173634}.halTopic:hover{border-color:#8fcac4;transform:translateY(-1px)}.halTopic span{display:block;font-size:22px;margin-bottom:8px}.halTopic b{display:block}.halTopic small{display:block;color:#6b817f;margin-top:5px;line-height:1.35}.halPolicy{margin-top:16px;background:#fbfdfd}.halPolicy p{margin:6px 0 0;color:#617976;line-height:1.5}@media(max-width:760px){.mainTabs{top:62px}.halSearchRow{display:block}.halSearchRow .btn{width:100%;margin-top:8px}.halTopicGrid{grid-template-columns:1fr}.halHero{padding:18px}.halHero h2{font-size:24px}}
+`;
+ document.head.appendChild(st);main.appendChild(nav);main.appendChild(cal);main.appendChild(hal);
+ const a=document.getElementById('tabCalendar'),b=document.getElementById('tabHalajot');
+ function show(which){const h=which==='hal';hal.hidden=!h;cal.hidden=h;a.classList.toggle('active',!h);b.classList.toggle('active',h);window.scrollTo({top:Math.max(0,main.offsetTop-70),behavior:'smooth'});}
+ a.onclick=()=>show('cal');b.onclick=()=>show('hal');
+ const q=document.getElementById('halQuery');document.getElementById('halSearchBtn').onclick=()=>renderResults(q.value);q.addEventListener('keydown',e=>{if(e.key==='Enter')renderResults(q.value)});
+ hal.querySelectorAll('.halTopic').forEach(btn=>btn.onclick=()=>{const t=topics.find(x=>x.id===btn.dataset.topic);q.value=t?t.title:'';renderResults(q.value);hal.querySelector('#halResults')?.scrollIntoView({behavior:'smooth',block:'start'});});
+ renderResults('');
+}
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>setTimeout(init,0));else setTimeout(init,0);
+})();
