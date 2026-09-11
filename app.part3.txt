@@ -1,6 +1,6 @@
 6400000)+1;let nx=new Date(b);nx.setDate(nx.getDate()+n-1);let hIso=localISO(nx),hOna=re[re.length-1].ona;out.push({date:hIso,ona:hOna,type:'haflaga',auto:true,label:'Haflagá vigente · '+n+' días'});if(state.settings.orHaflaga)out.push(previousOnaEvent(hIso,hOna,'Haflagá','haflaga'));}
  }
- for(const h of state.events.filter(e=>e.type==='hefsek')){let d=atNoon(h.date);for(let i=1;i<=7;i++){let q=new Date(d);q.setDate(q.getDate()+i);out.push({date:localISO(q),ona:'yom',type:'clean',auto:true,label:'Shivá Nekiim · '+i});}let t=new Date(d);t.setDate(t.getDate()+7);out.push({date:localISO(t),ona:'laila',type:'tevila',auto:true,label:'Tevilá'});}
+ for(const h of state.events.filter(e=>e.type==='hefsek')){let d=atNoon(h.date);for(let i=1;i<=7;i++){let q=new Date(d);q.setDate(q.getDate()+i);out.push({date:localISO(q),ona:'yom',type:'clean',auto:true,label:'Shivá Nekiim · '+i});}let t=new Date(d);t.setDate(t.getDate()+8);out.push({date:localISO(t),ona:'laila',type:'tevila',auto:true,label:'Tevilá'});}
  return out;
 }
 function allEvents(){return [...state.events,...autoEvents()]}
