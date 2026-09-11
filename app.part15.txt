@@ -3,3 +3,12 @@
  const apply=()=>{const old=document.getElementById('mailTime');if(!old||old.tagName==='SELECT')return;const s=document.createElement('select');s.id='mailTime';for(let h=0;h<24;h++){const v=String(h).padStart(2,'0')+':00',o=document.createElement('option');o.value=v;o.textContent=new Intl.DateTimeFormat('es-MX',{hour:'numeric',hour12:true,timeZone:'America/Mexico_City'}).format(new Date(`2026-01-01T${v}:00-06:00`));s.appendChild(o)}s.value=(String(old.value||'09:00').slice(0,2)+':00');old.replaceWith(s)};
  setTimeout(apply,0);authListeners.push((e)=>{if(e==='SIGNED_IN')setTimeout(apply,300)});
 })();
+
+(function loadPwaInstallExperience(){
+ if(document.querySelector('script[data-luaj-pwa-install]'))return;
+ const s=document.createElement('script');
+ s.src='./pwa-install.js';
+ s.defer=true;
+ s.dataset.luajPwaInstall='1';
+ document.head.appendChild(s);
+})();
