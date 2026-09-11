@@ -1,0 +1,24 @@
+
+// Sincroniza exclusivamente los avisos calculados por el motor actual del calendario.
+(function emailAlertSync(){
+ const baseApiCall=apiCall;
+ const alertTypes=new Set(['beinoni','jodesh','haflaga','pattern']);
+ function calculatedAlerts(){
+   if(typeof autoEvents!=='function')return [];
+   return autoEvents().filter(e=>alertTypes.has(e.type)).map((e,i)=>({
+     key:`${e.date}|${e.ona}|${e.type}|${e.label||''}|${i}`,
+     date:e.date,ona:e.ona,type:e.type,label:e.label||e.type
+   }));
+ }
+ async function syncWithToken(token){
+   try{return await baseApiCall('sync_email_alerts',{alerts:calculatedAlerts()},token)}catch(e){console.error('No se pudieron sincronizar avisos de correo',e)}
+ }
+ apiCall=async function(action,payload={},token=null){
+   const result=await baseApiCall(action,payload,token);
+   if(action==='save_settings'&&token)setTimeout(()=>syncWithToken(token),0);
+   return result;
+ };
+ async function syncNow(){const s=await validSession();if(s?.access_token)await syncWithToken(s.access_token)}
+ authListeners.push((event)=>{if(event==='SIGNED_IN')setTimeout(syncNow,700)});
+ if(currentUser)setTimeout(syncNow,700);
+})();
