@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Luaj Tahará">
+  <rect width="512" height="512" fill="#42b8ad"/>
+  <rect x="92" y="92" width="328" height="328" rx="92" fill="#f5fbfa"/>
+  <rect x="140" y="160" width="232" height="212" rx="30" fill="#ffffff"/>
+  <path d="M140 192a30 30 0 0 1 30-30h172a30 30 0 0 1 30 30v38H140z" fill="#167c76"/>
+  <rect x="190" y="132" width="20" height="68" rx="10" fill="#0d5f5a"/>
+  <rect x="302" y="132" width="20" height="68" rx="10" fill="#0d5f5a"/>
+  <circle cx="228" cy="292" r="34" fill="#42b8ad"/>
+  <circle cx="284" cy="292" r="34" fill="#42b8ad"/>
+</svg>
