@@ -53,3 +53,31 @@ if(haflagaArukaControl){
     save();render();
   };
 }
+
+// Exportación local y privada del estado del usuario actualmente autenticado.
+// No modifica el calendario ni envía el archivo a ningún tercero.
+const exportDataControl=document.getElementById('exportData');
+if(exportDataControl){
+  exportDataControl.onclick=()=>{
+    if(!currentUser){alert('Inicia sesión para descargar tus datos.');return;}
+    const payload={
+      app:'Luaj Tahará',
+      format_version:1,
+      exported_at:new Date().toISOString(),
+      data:{
+        events:Array.isArray(state.events)?state.events:[],
+        settings:{...defaultState().settings,...(state.settings||{})}
+      }
+    };
+    const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json;charset=utf-8'});
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');
+    const date=new Date().toISOString().slice(0,10);
+    a.href=url;
+    a.download='luaj-tahara-mis-datos-'+date+'.json';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(()=>URL.revokeObjectURL(url),1000);
+  };
+}
