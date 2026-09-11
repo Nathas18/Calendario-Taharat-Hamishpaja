@@ -1,0 +1,69 @@
+
+// Regla fija de Veset HaShavúa.
+// Se establece únicamente con 3 Reiyot CONSECUTIVAS del historial,
+// en el mismo día de la semana y la misma oná, separadas exactamente
+// 28 días (4 semanas) entre la primera y segunda y entre la segunda y tercera.
+// Si existe cualquier Reiyá intermedia, deja de cumplirse la secuencia.
+const _possiblePatternsBeforeHashavuaExact=possiblePatterns;
+possiblePatterns=function(){
+  const out=_possiblePatternsBeforeHashavuaExact().filter(p=>p.type!=='hashavua');
+  const re=state.events.filter(e=>e.type==='reiya').sort((a,b)=>a.date.localeCompare(b.date)||a.ona.localeCompare(b.ona));
+  if(re.length>=3){
+    const x=re.slice(-3);
+    const weekdays=x.map(r=>atNoon(r.date).getDay());
+    const gaps=[dayDiff(x[0].date,x[1].date),dayDiff(x[1].date,x[2].date)];
+    const exactFourWeeks=gaps[0]===28&&gaps[1]===28;
+    const sameWeekday=weekdays[0]===weekdays[1]&&weekdays[1]===weekdays[2];
+    if(sameOna(x)&&sameWeekday&&exactFourWeeks){
+      const nx=atNoon(x[2].date);nx.setDate(nx.getDate()+28);
+      const dayName=['domingo','lunes','martes','miércoles','jueves','viernes','Shabat'][weekdays[2]];
+      out.unshift({
+        type:'hashavua',
+        title:'Posible Veset HaShavúa Kavúa',
+        detail:'Las últimas 3 Reiyot consecutivas fueron en '+dayName+', en la misma oná, con exactamente 4 semanas (28 días) entre cada una. No hubo ninguna Reiyá intermedia. Próxima alerta: 28 días después, nuevamente '+dayName+' en la misma oná.',
+        projection:localISO(nx),
+        ona:x[2].ona,
+        step:28,
+        gaps:gaps
+      });
+    }
+  }
+  return out;
+};
+
+// Hashavúa ya no es configurable: eliminar los controles 20–40 días de la interfaz.
+['hashMin','hashMax'].forEach(id=>{
+  const el=document.getElementById(id);
+  if(el){const label=el.closest('label');if(label)label.remove();else el.remove();}
+});
+
+// Reemplazar la sincronización para que no dependa de los controles eliminados.
+syncControls=function(){
+  const d=defaultState().settings;state.settings={...d,...(state.settings||{})};
+  document.getElementById('wait').value=state.settings.wait;
+  document.getElementById('d31').checked=!!state.settings.d31;
+  document.getElementById('orJodesh').checked=!!state.settings.orJodesh;
+  document.getElementById('orBeinoni').checked=!!state.settings.orBeinoni;
+  document.getElementById('orHaflaga').checked=!!state.settings.orHaflaga;
+};
+
+// Reasignar los cambios de configuración existentes sin Hashavúa configurable.
+['wait','d31','orJodesh','orBeinoni','orHaflaga'].forEach(id=>{
+  const el=document.getElementById(id);if(!el)return;
+  el.onchange=()=>{
+    state.settings.wait=+document.getElementById('wait').value;
+    state.settings.d31=document.getElementById('d31').checked;
+    state.settings.orJodesh=document.getElementById('orJodesh').checked;
+    state.settings.orBeinoni=document.getElementById('orBeinoni').checked;
+    state.settings.orHaflaga=document.getElementById('orHaflaga').checked;
+    save();render();
+  };
+});
+
+// Actualizar únicamente la explicación visible de Hashavúa; no toca otras reglas.
+document.querySelectorAll('.notice').forEach(el=>{
+  const old='Veset HaShavúa requiere 3 Reiyot en el mismo día de la semana y misma oná, cada una perteneciente a un ciclo distinto dentro de la ventana configurada; la próxima alerta se proyecta al mismo día semanal alrededor de 30 días después, no una semana después.';
+  if(el.textContent.includes(old)){
+    el.innerHTML=el.innerHTML.replace(old,'Veset HaShavúa requiere 3 Reiyot consecutivas en el mismo día de la semana y la misma oná, con exactamente 4 semanas (28 días) entre cada una y sin ninguna Reiyá intermedia; la próxima alerta se proyecta exactamente 28 días después, en el mismo día de la semana y la misma oná.');
+  }
+});
