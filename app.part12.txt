@@ -1,0 +1,34 @@
+
+// Reporte sencillo de errores para todos los usuarios.
+// Abre el cliente de correo del dispositivo con destinatario, asunto y contexto preparados.
+// No adjunta ni envía automáticamente datos privados del calendario.
+(function addErrorReporting(){
+  const REPORT_EMAIL='admcalendarioth@gmail.com';
+  const main=document.getElementById('appMain');
+  if(!main||document.getElementById('errorReportCard'))return;
+  const card=document.createElement('div');
+  card.className='card';
+  card.id='errorReportCard';
+  card.style.marginTop='14px';
+  card.innerHTML='<b>¿Detectaste un error?</b><div class="notice" style="margin-top:8px">Ayúdanos a mejorar Luaj Tahará. Describe qué error encontraste y, si puedes, qué estabas haciendo cuando apareció. No incluyas información privada que no sea necesaria.</div><button class="btn" id="reportErrorBtn" type="button" style="margin-top:10px">Reportar un error</button><div class="notice" style="margin-top:8px">El reporte será dirigido a <b>'+REPORT_EMAIL+'</b>.</div>';
+  main.appendChild(card);
+  const btn=card.querySelector('#reportErrorBtn');
+  btn.onclick=()=>{
+    const description=prompt('Describe el error que encontraste:');
+    if(description===null)return;
+    const clean=description.trim();
+    if(!clean){alert('Escribe una breve descripción del error antes de enviarlo.');return;}
+    const subject='Reporte de error · Luaj Tahará';
+    const body=[
+      'Hola, encontré el siguiente error en Luaj Tahará:',
+      '',clean,'',
+      'Información técnica:',
+      'Fecha: '+new Date().toLocaleString('es-MX'),
+      'Página: '+location.href.split('#')[0],
+      'Navegador: '+navigator.userAgent,
+      '',
+      'Por privacidad, el calendario y el historial personal NO se adjuntan automáticamente.'
+    ].join('\n');
+    location.href='mailto:'+REPORT_EMAIL+'?subject='+encodeURIComponent(subject)+'&body='+encodeURIComponent(body);
+  };
+})();
