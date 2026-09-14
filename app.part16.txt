@@ -1,21 +1,27 @@
 
 (function addVerifiedPolancoTevila(){
- const add=()=>{
-  const view=document.getElementById('tevilotView');
-  const tab=document.getElementById('tabTevilot');
-  if(!view||!tab)return;
-  tab.addEventListener('click',()=>setTimeout(()=>{
-   const places=view.querySelector('.contactPlaces');
-   if(places&&!places.querySelector('[data-extra-polanco]')){
-    const b=document.createElement('button');b.className='contactPlace';b.type='button';b.dataset.extraPolanco='1';b.textContent='Polanco';places.appendChild(b);
-    b.onclick=()=>{
-     view.querySelectorAll('.contactPlace').forEach(x=>x.classList.remove('on'));b.classList.add('on');
-     const loc=view.querySelector('.contactLocation');if(loc)loc.textContent='Polanco';
-     const grid=view.querySelector('.contactGrid');if(!grid)return;
-     grid.innerHTML=`<article class="contactCard"><div class="contactName">Tebilá Jovanna y Susan Cojab</div><div class="tevilaAddress">📍 Edgar Allan Poe 231, Polanco, CDMX</div><div class="tevilaContact"><a href="tel:+525611685858">📞 Gela · 5611685858</a></div><div class="tevilaContact"><a href="tel:+525536352025">📞 Sari · 5536352025</a></div><a class="contactAction wazeAction" href="https://www.waze.com/ul?q=Edgar%20Allan%20Poe%20231%2C%20Polanco%2C%20CDMX&navigate=yes" target="_blank" rel="noopener">🚗 Ir con Waze</a></article>`;
-    };
-   }
-  },50));
- };
- setTimeout(add,300);authListeners.push(()=>setTimeout(add,350));
+ const cardHtml=`<article class="contactCard" data-edgar-allan-poe-tevila="1"><div class="contactName">Tebilá Jovanna y Susan Cojab</div><div class="tevilaAddress">📍 Edgar Allan Poe 231, Polanco, CDMX</div><div class="tevilaContact"><a href="tel:+525611685858">📞 Gela · 5611685858</a></div><div class="tevilaContact"><a href="tel:+525536352025">📞 Sari · 5536352025</a></div><a class="contactAction wazeAction" href="https://www.waze.com/ul?q=Edgar%20Allan%20Poe%20231%2C%20Polanco%2C%20CDMX&navigate=yes" target="_blank" rel="noopener">🚗 Ir con Waze</a></article>`;
+ function injectIfPolanco(){
+  const view=document.getElementById('tevilotView');if(!view||view.hidden)return;
+  const loc=view.querySelector('.contactLocation');
+  if(!loc||loc.textContent.trim()!=='Polanco')return;
+  const grid=view.querySelector('.contactGrid');if(!grid)return;
+  if(!grid.querySelector('[data-edgar-allan-poe-tevila]'))grid.insertAdjacentHTML('beforeend',cardHtml);
+ }
+ function wire(){
+  const view=document.getElementById('tevilotView'),tab=document.getElementById('tabTevilot');if(!view||!tab)return false;
+  if(!tab.dataset.edgarPolancoWired){tab.dataset.edgarPolancoWired='1';tab.addEventListener('click',()=>setTimeout(()=>{wirePolancoButtons();injectIfPolanco()},80));}
+  wirePolancoButtons();injectIfPolanco();return true;
+ }
+ function wirePolancoButtons(){
+  const view=document.getElementById('tevilotView');if(!view)return;
+  view.querySelectorAll('[data-tevila-place="Polanco"]').forEach(b=>{
+   if(b.dataset.edgarPolancoWired)return;b.dataset.edgarPolancoWired='1';
+   b.addEventListener('click',()=>setTimeout(injectIfPolanco,80));
+  });
+ }
+ let tries=0;const timer=setInterval(()=>{tries++;if(wire()||tries>40)clearInterval(timer)},100);
+ authListeners.push(()=>setTimeout(wire,350));
+ const observer=new MutationObserver(()=>{wirePolancoButtons();setTimeout(injectIfPolanco,0)});
+ setTimeout(()=>{const view=document.getElementById('tevilotView');if(view)observer.observe(view,{childList:true,subtree:true})},500);
 })();
