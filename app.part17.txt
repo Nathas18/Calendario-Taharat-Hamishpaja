@@ -1,0 +1,8 @@
+
+// Referencia civil visible del cuadro hebreo:
+// muestra únicamente la fecha civil de Onat Yom de ese cuadro.
+// Ej.: 2 Tishré 5787 = 13 Sep. La Laila debajo sigue perteneciendo al día hebreo siguiente.
+const CIVIL_MONTH_ABBR=['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+civilRefForHebDay=function(d){
+  return d.getDate()+' '+CIVIL_MONTH_ABBR[d.getMonth()];
+};
