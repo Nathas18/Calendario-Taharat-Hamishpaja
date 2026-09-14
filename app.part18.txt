@@ -1,0 +1,21 @@
+
+(function prioritizeTaharaMarkers(){
+ const reorder=()=>{
+  document.querySelectorAll('#grid .ona').forEach(el=>{
+   const head=el.querySelector('.onaHead');
+   const alerts=el.querySelector('.alertLabels');
+   const dot=el.querySelector('.dot');
+   const dotWrap=dot?dot.parentElement:null;
+   const manual=el.querySelector('.manualLines');
+   const holiday=el.querySelector('.holidayLine');
+   let anchor=head;
+   if(alerts){anchor.after(alerts);anchor=alerts}
+   if(dotWrap&&dotWrap!==head&&dotWrap!==alerts){anchor.after(dotWrap);anchor=dotWrap}
+   if(manual){anchor.after(manual);anchor=manual}
+   if(holiday){el.appendChild(holiday)}
+  });
+ };
+ const baseRender=render;
+ render=function(){baseRender();reorder()};
+ setTimeout(reorder,0);
+})();
