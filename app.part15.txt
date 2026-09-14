@@ -6,88 +6,53 @@
 
 (function loadPwaInstallExperience(){
  if(document.querySelector('script[data-luaj-pwa-install]'))return;
- const s=document.createElement('script');
- s.src='./pwa-install.js';
- s.defer=true;
- s.dataset.luajPwaInstall='1';
- document.head.appendChild(s);
+ const s=document.createElement('script');s.src='./pwa-install.js';s.defer=true;s.dataset.luajPwaInstall='1';document.head.appendChild(s);
 })();
 
 (function luajContactTabs(){
  const groups={
-  'Polanco':[
-   {name:'Debie Tawil',phone:'5525620000',kind:'wa'},
-   {name:'Lea Mizrahi',phone:'5530428347',kind:'sms'},
-   {name:'Sary Michan',phone:'5535337631',kind:'wa'}
+  'Polanco':[{name:'Debie Tawil',phone:'5525620000',kind:'wa'},{name:'Lea Mizrahi',phone:'5530428347',kind:'sms'},{name:'Sary Michan',phone:'5535337631',kind:'wa'}],
+  'Tecamachalco':[{name:'Lety Maleh',phone:'5511206061',kind:'wa'},{name:'Raquel Daniels',phone:'5535331828',kind:'wa'},{name:'Jofit Credi',phone:'5510786743',kind:'sms'}],
+  'Interlomas':[{name:'Lulu Saadia',phone:'5519510164',kind:'wa'},{name:'Sara Chapan',phone:'5555064749',kind:'wa'}]
+ };
+ const tevilot={
+  'Lomas de Vista Hermosa':[
+   {name:'Templo Shar LeSimjá',address:'Av. Loma de la Palma 200',contacts:[['Graciela','5530392129']],waze:'https://www.waze.com/es/live-map/directions/mx/cdmx/mexico-d.f./av.-loma-de-la-palma-200?to=place.ChIJFwJiuSsB0oURnntZJBEGC2E'},
+   {name:'Centro Comunitario Maguen David',address:'Carlos Echanove 224',contacts:[['Sara','5524905400']],waze:'https://www.waze.com/ul?q=Carlos%20Echanove%20224%2C%20Lomas%20de%20Vista%20Hermosa%2C%20CDMX&navigate=yes'}
+  ],
+  'Acapulco':[
+   {name:'Hotel Dreams',address:'Av. Costera Miguel Alemán 1',contacts:[['Rivka','5512591017']],waze:'https://www.waze.com/ul?q=Av.%20Costera%20Miguel%20Aleman%201%2C%20Acapulco%2C%20Guerrero&navigate=yes'}
   ],
   'Tecamachalco':[
-   {name:'Lety Maleh',phone:'5511206061',kind:'wa'},
-   {name:'Raquel Daniels',phone:'5535331828',kind:'wa'},
-   {name:'Jofit Credi',phone:'5510786743',kind:'sms'}
+   {name:'Templo Eliahu Fasja',address:'Fuente de Templanza 22',contacts:[['Nancy','5530108296'],['Susy','5522030922','Shabat y Yom Tov']],waze:'https://www.waze.com/ul?q=Fuente%20de%20Templanza%2022%2C%20Lomas%20de%20Tecamachalco%2C%20Naucalpan&navigate=yes'},
+   {name:'Kolel Shebet Ajim',address:'Sierra Guadarrama 90',contacts:[['Rachel','5530200086']],waze:'https://www.waze.com/live-map/directions/mx/cdmx/mexico-d.f./sierra-guadarrama-90?to=place.ChIJvdl9DYYB0oURyoIAWyNVLO8'},
+   {name:'Centro Social Monte Sinai',address:'Fuente de la Huerta 22',contacts:[['Fanny','5555055032']],waze:'https://www.waze.com/es/live-map/directions/mx/mex./naucalpan-de-juarez/sociedad-benefica-alianza-monte-sinai?to=place.ChIJlfxv7sgD0oURaKEfHnerB2o'},
+   {name:'Centro Sefaradí',address:'Av. de los Bosques 292',contacts:[['Berta','5552169116']],waze:'https://www.waze.com/ul?q=Av.%20de%20los%20Bosques%20292%2C%20Naucalpan%2C%20Estado%20de%20Mexico&navigate=yes'},
+   {name:'Templo Ramat Shalóm',address:'Fuente del Pescador 35',contacts:[['Silvie','5514079868']],waze:'https://www.waze.com/ul?q=Fuente%20del%20Pescador%2035%2C%20Lomas%20de%20Tecamachalco%2C%20Naucalpan&navigate=yes'}
+  ],
+  'Polanco':[
+   {name:'Templo Beth Moshe',address:'Tennyson 134',contacts:[['Amelia','5552961606']],waze:'https://www.waze.com/es/live-map/directions/mx/cdmx/mexico-d.f./la-sociedad-de-beneficencia-alianza-monte-sinai-i.a.p.?to=place.ChIJBRrcjgEC0oURpeC-MnRzDlU'}
+  ],
+  'Bosques de las Lomas':[
+   {name:'Templo Abud y Mery Attie',address:'Bosques de Sabinos 180',contacts:[['Karen','5567082033']],waze:'https://www.waze.com/ul?q=Bosques%20de%20Sabinos%20180%2C%20Bosques%20de%20las%20Lomas%2C%20CDMX&navigate=yes'}
   ],
   'Interlomas':[
-   {name:'Lulu Saadia',phone:'5519510164',kind:'wa'},
-   {name:'Sara Chapan',phone:'5555064749',kind:'wa'}
+   {name:'Templo Shaaré Tziyón',address:'Pasaje Interlomas 2',contacts:[['Rosy','5514708064'],['Lilian','5515686939','Shabat y Yom Tov']],waze:'https://www.waze.com/ul?q=Pasaje%20Interlomas%202%2C%20Huixquilucan%2C%20Estado%20de%20Mexico&navigate=yes'},
+   {name:'Residencial Toledo',address:'Av. Jesús del Monte 45',contacts:[['Alicia','5530334160']],waze:'https://www.waze.com/live-map/directions/mx/mex./jesus-del-monte/residencial-toledo?to=place.ChIJkQIjVpcH0oURWNXah_uLggE'},
+   {name:'Residencial Ibiza',address:'Hacienda del Ciervo 24A',contacts:[['Alegra','5519590742'],['Elena','5551036555']],waze:'https://www.waze.com/ul?q=Hacienda%20del%20Ciervo%2024%2C%20Hacienda%20de%20las%20Palmas%2C%20Huixquilucan&navigate=yes'}
+  ],
+  'Cuernavaca':[
+   {name:'Antinea',address:'Antinea 13',contacts:[['Judith','5536947473']],waze:'https://www.waze.com/live-map/directions/mexico/morelos/cuernavaca/antinea-13?to=place.ChIJmZTKMO7fzYURJDccDOUxgN4'},
+   {name:'Templo Ashira La-Hashem – Condominio Punta Fiori',address:'Parcela 33',contacts:[['Orit','5518010049']],waze:'https://www.waze.com/ul?q=Condominio%20Punta%20Fiori%20Parcela%2033%2C%20Temixco%2C%20Morelos&navigate=yes'}
   ]
  };
  const css=`<style id="luaj-contact-tabs-css">
- .mainTabs{display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px!important;align-items:stretch}
- .mainTabs .mainTab{min-width:0;padding:10px 5px!important;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;order:1}
- #tabBodeket{order:1}#tabJajamim{order:2}#tabTevilot{order:3}#tabHalajot{order:4}
- #tabCalendar{order:5;grid-column:1/-1!important;width:100%;font-size:15px!important;padding:13px 12px!important;border-radius:14px!important;background:#e9f8f6!important;color:#0d5f5a!important;border:1px solid #9fd7d1!important;box-shadow:0 5px 16px rgba(23,96,90,.08)}
- #tabCalendar.active{background:linear-gradient(135deg,#42b8ad,#258f87)!important;color:#fff!important;border-color:transparent!important;box-shadow:0 7px 20px rgba(23,96,90,.2)}
- .contactView{padding:2px 0 24px;color:#173634}
- .contactHero{background:linear-gradient(135deg,#f7fffe,#e4f7f4);border:1px solid #cbe5e1;border-radius:20px;padding:20px;margin-bottom:14px}
- .contactEyebrow{font-size:12px;font-weight:900;letter-spacing:.08em;text-transform:uppercase;color:#167c76}
- .contactHero h2{margin:4px 0 5px;font-size:27px;color:#173634}.contactHero p{margin:0;color:#5b7774;line-height:1.45}
- .contactPlaces{display:flex;gap:8px;overflow:auto;padding:2px 0 10px;scrollbar-width:none}.contactPlaces::-webkit-scrollbar{display:none}
- .contactPlace{white-space:nowrap;border:1px solid #bfe3df;background:#fff;color:#167c76;border-radius:999px;padding:9px 14px;font-weight:800;cursor:pointer}
- .contactPlace.on{background:#167c76;color:#fff;border-color:#167c76}
- .contactLocation{font-size:19px;font-weight:900;color:#0d5f5a;margin:7px 2px 10px}
- .contactGrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
- .contactCard{background:#fff;border:1px solid #dce9e7;border-radius:18px;padding:17px;box-shadow:0 8px 24px rgba(23,96,90,.07)}
- .contactName{font-size:18px;font-weight:900;color:#173634;margin-bottom:5px}.contactPhone{font-size:14px;color:#6b817f;margin-bottom:12px}
- .contactAction{display:block;text-align:center;text-decoration:none;border-radius:12px;padding:11px 9px;font-size:14px;font-weight:900;background:linear-gradient(135deg,#42b8ad,#258f87);color:#fff}
- .contactAction.sms{background:#e9f8f6;color:#0d5f5a;border:1px solid #bfe3df}
- .jajamPlaceholder{background:#fff;border:1px solid #dce9e7;border-radius:18px;padding:22px;box-shadow:0 8px 24px rgba(23,96,90,.07);color:#5b7774}.jajamPlaceholder b{display:block;color:#0d5f5a;font-size:18px;margin-bottom:5px}
- .contactNote{font-size:12px;color:#6b817f;margin-top:16px;line-height:1.45}
- @media(max-width:620px){.mainTabs .mainTab{font-size:10px;padding:9px 2px!important}.mainTabs{gap:5px!important}#tabCalendar{font-size:14px!important;padding:12px 10px!important}.contactGrid{grid-template-columns:1fr}.contactHero{padding:17px}.contactHero h2{font-size:24px}}
+ .mainTabs{display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px!important;align-items:stretch}.mainTabs .mainTab{min-width:0;padding:10px 5px!important;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;order:1}#tabBodeket{order:1}#tabJajamim{order:2}#tabTevilot{order:3}#tabHalajot{order:4}#tabCalendar{order:5;grid-column:1/-1!important;width:100%;font-size:15px!important;padding:13px 12px!important;border-radius:14px!important;background:#e9f8f6!important;color:#0d5f5a!important;border:1px solid #9fd7d1!important;box-shadow:0 5px 16px rgba(23,96,90,.08)}#tabCalendar.active{background:linear-gradient(135deg,#42b8ad,#258f87)!important;color:#fff!important;border-color:transparent!important;box-shadow:0 7px 20px rgba(23,96,90,.2)}
+ .contactView{padding:2px 0 24px;color:#173634}.contactHero{background:linear-gradient(135deg,#f7fffe,#e4f7f4);border:1px solid #cbe5e1;border-radius:20px;padding:20px;margin-bottom:14px}.contactEyebrow{font-size:12px;font-weight:900;letter-spacing:.08em;text-transform:uppercase;color:#167c76}.contactHero h2{margin:4px 0 5px;font-size:27px;color:#173634}.contactHero p{margin:0;color:#5b7774;line-height:1.45}.contactPlaces{display:flex;gap:8px;overflow:auto;padding:2px 0 10px;scrollbar-width:none}.contactPlaces::-webkit-scrollbar{display:none}.contactPlace{white-space:nowrap;border:1px solid #bfe3df;background:#fff;color:#167c76;border-radius:999px;padding:9px 14px;font-weight:800;cursor:pointer}.contactPlace.on{background:#167c76;color:#fff;border-color:#167c76}.contactLocation{font-size:19px;font-weight:900;color:#0d5f5a;margin:7px 2px 10px}.contactGrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.contactCard{background:#fff;border:1px solid #dce9e7;border-radius:18px;padding:17px;box-shadow:0 8px 24px rgba(23,96,90,.07)}.contactName{font-size:18px;font-weight:900;color:#173634;margin-bottom:5px}.contactPhone,.tevilaAddress{font-size:14px;color:#6b817f;margin-bottom:10px}.contactAction{display:block;text-align:center;text-decoration:none;border-radius:12px;padding:11px 9px;font-size:14px;font-weight:900;background:linear-gradient(135deg,#42b8ad,#258f87);color:#fff}.contactAction.sms{background:#e9f8f6;color:#0d5f5a;border:1px solid #bfe3df}.tevilaContact{padding:7px 0;border-top:1px solid #edf4f3;font-size:14px}.tevilaContact a{color:#0d5f5a;font-weight:900;text-decoration:none}.tevilaNote{display:block;font-size:11px;color:#c84b55;font-weight:800;margin-top:2px}.wazeAction{margin-top:11px;background:#e9f8f6!important;color:#0d5f5a!important;border:1px solid #9fd7d1}.jajamPlaceholder{background:#fff;border:1px solid #dce9e7;border-radius:18px;padding:22px;box-shadow:0 8px 24px rgba(23,96,90,.07);color:#5b7774}.jajamPlaceholder b{display:block;color:#0d5f5a;font-size:18px;margin-bottom:5px}.contactNote{font-size:12px;color:#6b817f;margin-top:16px;line-height:1.45}@media(max-width:620px){.mainTabs .mainTab{font-size:10px;padding:9px 2px!important}.mainTabs{gap:5px!important}#tabCalendar{font-size:14px!important;padding:12px 10px!important}.contactGrid{grid-template-columns:1fr}.contactHero{padding:17px}.contactHero h2{font-size:24px}}
  </style>`;
- function renderBodeket(loc){
-  const view=document.getElementById('bodeketView');if(!view)return;
-  const places=Object.keys(groups).map(x=>`<button class="contactPlace ${x===loc?'on':''}" type="button" data-place="${x}">${x}</button>`).join('');
-  const cards=groups[loc].map(p=>{
-   if(!p.phone)return `<article class="contactCard"><div class="contactName">${p.name}</div></article>`;
-   const intl='52'+p.phone;
-   const action=p.kind==='wa'?`<a class="contactAction" href="https://wa.me/${intl}" target="_blank" rel="noopener">WhatsApp</a>`:`<a class="contactAction sms" href="sms:+${intl}">SMS</a>`;
-   return `<article class="contactCard"><div class="contactName">${p.name}</div><div class="contactPhone">${p.phone}</div>${action}</article>`;
-  }).join('');
-  view.innerHTML=`<div class="contactHero"><div class="contactEyebrow">Luaj Tahará</div><h2>👩🏻 Bodeket</h2><p>Contactos organizados por localidad.</p></div><div class="contactPlaces">${places}</div><div class="contactLocation">${loc}</div><div class="contactGrid">${cards}</div><div class="contactNote">Verifica el nombre y el número antes de enviar información personal o sensible.</div>`;
-  view.querySelectorAll('.contactPlace').forEach(b=>b.onclick=()=>renderBodeket(b.dataset.place));
- }
- function allViews(){return ['calendarView','halajotView','bodeketView','jajamimView','tevilotView'].map(id=>document.getElementById(id)).filter(Boolean)}
- function setActive(id){document.querySelectorAll('.mainTab').forEach(b=>b.classList.toggle('active',b.id===id))}
- function showOnly(viewId,tabId){allViews().forEach(v=>v.hidden=v.id!==viewId);setActive(tabId)}
- function showBodeket(){showOnly('bodeketView','tabBodeket')}
- function showJajamim(){showOnly('jajamimView','tabJajamim')}
- function showTevilot(){showOnly('tevilotView','tabTevilot')}
- function hideCustom(){['bodeketView','jajamimView','tevilotView'].forEach(id=>{const v=document.getElementById(id);if(v)v.hidden=true})}
- function install(attempt=0){
-  const nav=document.querySelector('.mainTabs'),calBtn=document.getElementById('tabCalendar'),halBtn=document.getElementById('tabHalajot'),hal=document.getElementById('halajotView');
-  if(!nav||!calBtn||!halBtn||!hal){if(attempt<30)setTimeout(()=>install(attempt+1),100);return}
-  document.getElementById('luajHelpFab')?.remove();document.getElementById('luajHelpOverlay')?.remove();document.getElementById('luaj-help-css')?.remove();
-  if(!document.getElementById('luaj-contact-tabs-css'))document.head.insertAdjacentHTML('beforeend',css);
-  calBtn.textContent='📅 Calendario';halBtn.textContent='📖 Halajot';
-  let b=document.getElementById('tabBodeket');if(!b){b=document.createElement('button');b.className='mainTab';b.id='tabBodeket';b.type='button';nav.insertBefore(b,halBtn)}b.textContent='👩🏻 Bodeket';
-  let j=document.getElementById('tabJajamim');if(!j){j=document.createElement('button');j.className='mainTab';j.id='tabJajamim';j.type='button';nav.insertBefore(j,halBtn)}j.textContent='🧔🏻‍♂️ Jajamim';
-  let t=document.getElementById('tabTevilot');if(!t){t=document.createElement('button');t.className='mainTab';t.id='tabTevilot';t.type='button';nav.insertBefore(t,halBtn)}t.textContent='💧 Tevilot';
-  const main=hal.parentElement;
-  let bv=document.getElementById('bodeketView');if(!bv){bv=document.createElement('section');bv.id='bodeketView';bv.className='contactView';bv.hidden=true;main.insertBefore(bv,hal)}
-  let jv=document.getElementById('jajamimView');if(!jv){jv=document.createElement('section');jv.id='jajamimView';jv.className='contactView';jv.hidden=true;main.insertBefore(jv,hal)}jv.innerHTML='<div class="contactHero"><div class="contactEyebrow">Luaj Tahará</div><h2>🧔🏻‍♂️ Jajamim</h2><p>Contacto para Sheelat Jajam.</p></div><div class="jajamPlaceholder"><b>Jajamim</b>Los contactos se agregarán aquí cuando nos pases las capturas correspondientes.</div>';
-  let tv=document.getElementById('tevilotView');if(!tv){tv=document.createElement('section');tv.id='tevilotView';tv.className='contactView';tv.hidden=true;main.insertBefore(tv,hal)}tv.innerHTML='<div class="contactHero"><div class="contactEyebrow">Luaj Tahará</div><h2>💧 Tevilot</h2><p>Información y recursos relacionados con Tevilot.</p></div><div class="jajamPlaceholder"><b>Tevilot</b>Esta sección ya quedó preparada para agregar la información que quieras mostrar aquí.</div>';
-  renderBodeket('Polanco');
-  b.onclick=showBodeket;j.onclick=showJajamim;t.onclick=showTevilot;
-  calBtn.addEventListener('click',hideCustom);halBtn.addEventListener('click',hideCustom);
- }
+ function renderBodeket(loc){const view=document.getElementById('bodeketView');if(!view)return;const places=Object.keys(groups).map(x=>`<button class="contactPlace ${x===loc?'on':''}" type="button" data-place="${x}">${x}</button>`).join('');const cards=groups[loc].map(p=>{const intl='52'+p.phone;const action=p.kind==='wa'?`<a class="contactAction" href="https://wa.me/${intl}" target="_blank" rel="noopener">WhatsApp</a>`:`<a class="contactAction sms" href="sms:+${intl}">SMS</a>`;return `<article class="contactCard"><div class="contactName">${p.name}</div><div class="contactPhone">${p.phone}</div>${action}</article>`}).join('');view.innerHTML=`<div class="contactHero"><div class="contactEyebrow">Luaj Tahará</div><h2>👩🏻 Bodeket</h2><p>Contactos organizados por localidad.</p></div><div class="contactPlaces">${places}</div><div class="contactLocation">${loc}</div><div class="contactGrid">${cards}</div><div class="contactNote">Verifica el nombre y el número antes de enviar información personal o sensible.</div>`;view.querySelectorAll('.contactPlace').forEach(b=>b.onclick=()=>renderBodeket(b.dataset.place))}
+ function renderTevilot(loc){const view=document.getElementById('tevilotView');if(!view)return;const places=Object.keys(tevilot).map(x=>`<button class="contactPlace ${x===loc?'on':''}" type="button" data-tevila-place="${x}">${x}</button>`).join('');const cards=tevilot[loc].map(p=>{const cs=p.contacts.map(c=>`<div class="tevilaContact"><a href="tel:+52${c[1]}">📞 ${c[0]} · ${c[1]}</a>${c[2]?`<span class="tevilaNote">${c[2]}</span>`:''}</div>`).join('');return `<article class="contactCard"><div class="contactName">${p.name}</div><div class="tevilaAddress">📍 ${p.address}</div>${cs}<a class="contactAction wazeAction" href="${p.waze}" target="_blank" rel="noopener">🚗 Ir con Waze</a></article>`}).join('');view.innerHTML=`<div class="contactHero"><div class="contactEyebrow">Luaj Tahará</div><h2>💧 Tevilot</h2><p>Ubicaciones verificadas y contactos correspondientes.</p></div><div class="contactPlaces">${places}</div><div class="contactLocation">${loc}</div><div class="contactGrid">${cards}</div><div class="contactNote">Las ubicaciones pendientes de verificación se agregarán después de confirmarlas.</div>`;view.querySelectorAll('[data-tevila-place]').forEach(b=>b.onclick=()=>renderTevilot(b.dataset.tevilaPlace))}
+ function allViews(){return ['calendarView','halajotView','bodeketView','jajamimView','tevilotView'].map(id=>document.getElementById(id)).filter(Boolean)}function setActive(id){document.querySelectorAll('.mainTab').forEach(b=>b.classList.toggle('active',b.id===id))}function showOnly(viewId,tabId){allViews().forEach(v=>v.hidden=v.id!==viewId);setActive(tabId)}function showBodeket(){showOnly('bodeketView','tabBodeket')}function showJajamim(){showOnly('jajamimView','tabJajamim')}function showTevilot(){showOnly('tevilotView','tabTevilot')}function hideCustom(){['bodeketView','jajamimView','tevilotView'].forEach(id=>{const v=document.getElementById(id);if(v)v.hidden=true})}
+ function install(attempt=0){const nav=document.querySelector('.mainTabs'),calBtn=document.getElementById('tabCalendar'),halBtn=document.getElementById('tabHalajot'),hal=document.getElementById('halajotView');if(!nav||!calBtn||!halBtn||!hal){if(attempt<30)setTimeout(()=>install(attempt+1),100);return}document.getElementById('luajHelpFab')?.remove();document.getElementById('luajHelpOverlay')?.remove();document.getElementById('luaj-help-css')?.remove();if(!document.getElementById('luaj-contact-tabs-css'))document.head.insertAdjacentHTML('beforeend',css);calBtn.textContent='📅 Calendario';halBtn.textContent='📖 Halajot';let b=document.getElementById('tabBodeket');if(!b){b=document.createElement('button');b.className='mainTab';b.id='tabBodeket';b.type='button';nav.insertBefore(b,halBtn)}b.textContent='👩🏻 Bodeket';let j=document.getElementById('tabJajamim');if(!j){j=document.createElement('button');j.className='mainTab';j.id='tabJajamim';j.type='button';nav.insertBefore(j,halBtn)}j.textContent='🧔🏻‍♂️ Jajamim';let t=document.getElementById('tabTevilot');if(!t){t=document.createElement('button');t.className='mainTab';t.id='tabTevilot';t.type='button';nav.insertBefore(t,halBtn)}t.textContent='💧 Tevilot';const main=hal.parentElement;let bv=document.getElementById('bodeketView');if(!bv){bv=document.createElement('section');bv.id='bodeketView';bv.className='contactView';bv.hidden=true;main.insertBefore(bv,hal)}let jv=document.getElementById('jajamimView');if(!jv){jv=document.createElement('section');jv.id='jajamimView';jv.className='contactView';jv.hidden=true;main.insertBefore(jv,hal)}jv.innerHTML='<div class="contactHero"><div class="contactEyebrow">Luaj Tahará</div><h2>🧔🏻‍♂️ Jajamim</h2><p>Contacto para Sheelat Jajam.</p></div><div class="jajamPlaceholder"><b>Jajamim</b>Los contactos se agregarán aquí cuando nos pases las capturas correspondientes.</div>';let tv=document.getElementById('tevilotView');if(!tv){tv=document.createElement('section');tv.id='tevilotView';tv.className='contactView';tv.hidden=true;main.insertBefore(tv,hal)}renderBodeket('Polanco');renderTevilot('Lomas de Vista Hermosa');b.onclick=showBodeket;j.onclick=showJajamim;t.onclick=showTevilot;calBtn.addEventListener('click',hideCustom);halBtn.addEventListener('click',hideCustom)}
  setTimeout(()=>install(),0);authListeners.push(()=>setTimeout(()=>install(),150));
 })();
