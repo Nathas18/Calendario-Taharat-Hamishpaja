@@ -1,0 +1,48 @@
+
+(function correctVesetHashavuaRule(){
+  // Regla definida por el usuario para Veset HaShavúa:
+  // 3 Reiyot bastan. Deben caer en el mismo día de la semana, en la misma oná,
+  // y mantener exactamente el mismo intervalo inclusivo entre la 1ª→2ª y 2ª→3ª.
+  // Los intervalos válidos son 8, 15, 22 o 29 días (equivalen a +7,+14,+21,+28 días de fecha a fecha).
+  // No existe aquí una secuencia escalonada: 15 y luego 29 NO establece HaShavúa.
+  const basePossiblePatterns=possiblePatterns;
+  possiblePatterns=function(){
+    const out=basePossiblePatterns().filter(p=>p.type!=='hashavua');
+    const re=state.events.filter(e=>e.type==='reiya').sort((a,b)=>a.date.localeCompare(b.date)||a.ona.localeCompare(b.ona));
+    if(re.length<3)return out;
+    const x=re.slice(-3);
+    const weekdays=x.map(r=>atNoon(r.date).getDay());
+    const intervals=[1+dayDiff(x[0].date,x[1].date),1+dayDiff(x[1].date,x[2].date)];
+    const allowed=[8,15,22,29];
+    if(sameOna(x)&&weekdays[0]===weekdays[1]&&weekdays[1]===weekdays[2]&&intervals[0]===intervals[1]&&allowed.includes(intervals[0])){
+      const interval=intervals[0];
+      const nx=atNoon(x[2].date);nx.setDate(nx.getDate()+interval-1);
+      const wd=['domingo','lunes','martes','miércoles','jueves','viernes','Shabat'][weekdays[2]];
+      out.push({
+        type:'hashavua',
+        title:'Posible Veset HaShavúa Kavúa',
+        detail:'Las últimas 3 Reiyot fueron en '+wd+', en la misma oná, con el mismo intervalo de '+interval+' días (conteo inclusivo) entre cada una. Próxima proyección: '+interval+' días siguiendo la misma secuencia.',
+        projection:localISO(nx),
+        ona:x[2].ona,
+        interval,
+        gaps:intervals
+      });
+    }
+    return out;
+  };
+
+  function tidyHashavuaSettings(){
+    ['hashMin','hashMax'].forEach(id=>{const el=document.getElementById(id);if(el&&el.closest('label'))el.closest('label').style.display='none'});
+    const settings=document.querySelector('.settings');
+    if(settings&&!document.getElementById('hashavuaRuleNote')){
+      const n=document.createElement('div');
+      n.id='hashavuaRuleNote';
+      n.className='notice';
+      n.style.cssText='grid-column:1/-1;margin-top:4px';
+      n.innerHTML='<b>Veset HaShavúa:</b> se establece matemáticamente con 3 Reiyot en el mismo día de la semana y la misma oná, manteniendo exactamente el mismo intervalo inclusivo de <b>8, 15, 22 o 29 días</b> entre cada una.';
+      settings.appendChild(n);
+    }
+  }
+  setTimeout(()=>{tidyHashavuaSettings();render()},200);
+  authListeners.push(()=>setTimeout(()=>{tidyHashavuaSettings();render()},350));
+})();
