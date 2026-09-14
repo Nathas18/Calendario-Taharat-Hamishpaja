@@ -21,7 +21,7 @@
    {name:'Sary Michan',phone:'5535337631',kind:'wa'}
   ],
   'Tecamachalco':[
-   {name:'Lety Maleh',phone:'',kind:'sms'},
+   {name:'Lety Maleh',phone:'5511206061',kind:'wa'},
    {name:'Raquel Daniels',phone:'5535331828',kind:'wa'},
    {name:'Jofit Credi',phone:'5510786743',kind:'sms'}
   ],
@@ -60,7 +60,7 @@
    const action=p.kind==='wa'?`<a class="contactAction" href="https://wa.me/${intl}" target="_blank" rel="noopener">WhatsApp</a>`:`<a class="contactAction sms" href="sms:+${intl}">SMS</a>`;
    return `<article class="contactCard"><div class="contactName">${p.name}</div><div class="contactPhone">${p.phone}</div>${action}</article>`;
   }).join('');
-  view.innerHTML=`<div class="contactHero"><div class="contactEyebrow">Luaj Tahará</div><h2>Bodeket</h2><p>Contactos organizados por localidad.</p></div><div class="contactPlaces">${places}</div><div class="contactLocation">${loc}</div><div class="contactGrid">${cards}</div><div class="contactNote">Verifica el nombre y el número antes de enviar información personal o sensible.</div>`;
+  view.innerHTML=`<div class="contactHero"><div class="contactEyebrow">Luaj Tahará</div><h2>👩 Bodeket</h2><p>Contactos organizados por localidad.</p></div><div class="contactPlaces">${places}</div><div class="contactLocation">${loc}</div><div class="contactGrid">${cards}</div><div class="contactNote">Verifica el nombre y el número antes de enviar información personal o sensible.</div>`;
   view.querySelectorAll('.contactPlace').forEach(b=>b.onclick=()=>renderBodeket(b.dataset.place));
  }
  function setActive(id){document.querySelectorAll('.mainTab').forEach(b=>b.classList.toggle('active',b.id===id));}
@@ -72,12 +72,12 @@
   if(!nav||!calBtn||!halBtn||!hal){if(attempt<30)setTimeout(()=>install(attempt+1),100);return}
   document.getElementById('luajHelpFab')?.remove();document.getElementById('luajHelpOverlay')?.remove();document.getElementById('luaj-help-css')?.remove();
   if(!document.getElementById('luaj-contact-tabs-css'))document.head.insertAdjacentHTML('beforeend',css);
-  calBtn.textContent='Calendario';halBtn.textContent='Halajot';
-  let b=document.getElementById('tabBodeket');if(!b){b=document.createElement('button');b.className='mainTab';b.id='tabBodeket';b.type='button';b.textContent='Bodeket';nav.insertBefore(b,halBtn)}
-  let j=document.getElementById('tabJajamim');if(!j){j=document.createElement('button');j.className='mainTab';j.id='tabJajamim';j.type='button';j.textContent='Jajamim';nav.insertBefore(j,halBtn)}
+  calBtn.textContent='📅 Calendario';halBtn.textContent='📖 Halajot';
+  let b=document.getElementById('tabBodeket');if(!b){b=document.createElement('button');b.className='mainTab';b.id='tabBodeket';b.type='button';nav.insertBefore(b,halBtn)}b.textContent='👩 Bodeket';
+  let j=document.getElementById('tabJajamim');if(!j){j=document.createElement('button');j.className='mainTab';j.id='tabJajamim';j.type='button';nav.insertBefore(j,halBtn)}j.textContent='🎩 Jajamim';
   const main=hal.parentElement;
   let bv=document.getElementById('bodeketView');if(!bv){bv=document.createElement('section');bv.id='bodeketView';bv.className='contactView';bv.hidden=true;main.insertBefore(bv,hal)}
-  let jv=document.getElementById('jajamimView');if(!jv){jv=document.createElement('section');jv.id='jajamimView';jv.className='contactView';jv.hidden=true;jv.innerHTML='<div class="contactHero"><div class="contactEyebrow">Luaj Tahará</div><h2>Jajamim</h2><p>Contacto para Sheelat Jajam.</p></div><div class="jajamPlaceholder"><b>Jajamim</b>Los contactos se agregarán aquí cuando nos pases las capturas correspondientes.</div>';main.insertBefore(jv,hal)}
+  let jv=document.getElementById('jajamimView');if(!jv){jv=document.createElement('section');jv.id='jajamimView';jv.className='contactView';jv.hidden=true;main.insertBefore(jv,hal)}jv.innerHTML='<div class="contactHero"><div class="contactEyebrow">Luaj Tahará</div><h2>🎩 Jajamim</h2><p>Contacto para Sheelat Jajam.</p></div><div class="jajamPlaceholder"><b>Jajamim</b>Los contactos se agregarán aquí cuando nos pases las capturas correspondientes.</div>';
   renderBodeket('Polanco');
   b.onclick=showBodeket;j.onclick=showJajamim;
   calBtn.addEventListener('click',hideCustom);halBtn.addEventListener('click',hideCustom);
