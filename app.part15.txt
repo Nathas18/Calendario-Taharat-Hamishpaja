@@ -12,3 +12,34 @@
  s.dataset.luajPwaInstall='1';
  document.head.appendChild(s);
 })();
+
+(function luajHelpDirectory(){
+ const groups={
+  'Polanco':[
+   {name:'Debie Tawil',phone:'5525620000',kind:'wa'},
+   {name:'Lea Mizrahi',phone:'5530428347',kind:'sms'},
+   {name:'Sary Michan',phone:'5535337631',kind:'wa'}
+  ],
+  'Tecamachalco':[
+   {name:'Lety Maleh',phone:'',kind:'sms'},
+   {name:'Raquel Daniels',phone:'5535331828',kind:'wa'},
+   {name:'Jofit Credi',phone:'5510786743',kind:'sms'}
+  ],
+  'Interlomas':[
+   {name:'Lulu Saadia',phone:'5519510164',kind:'wa'},
+   {name:'Sara Chapan',phone:'5555064749',kind:'wa'}
+  ]
+ };
+ const css=`<style id="luaj-help-css">
+ #luajHelpFab{position:fixed;right:18px;bottom:82px;z-index:850;border:0;border-radius:999px;padding:11px 16px;background:#167c76;color:#fff;font:700 14px system-ui;box-shadow:0 8px 24px #0d5f5a33;cursor:pointer}
+ #luajHelpOverlay{position:fixed;inset:0;z-index:3000;background:#f4f9f8;overflow:auto;font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:#173634}
+ .lh-head{position:sticky;top:0;z-index:2;background:linear-gradient(135deg,#167c76,#42b8ad);color:#fff;padding:18px 18px 16px;box-shadow:0 3px 16px #0d5f5a22}.lh-top{display:flex;align-items:center;gap:12px}.lh-back{border:0;background:#ffffff22;color:#fff;width:40px;height:40px;border-radius:13px;font-size:25px;cursor:pointer}.lh-title{font-size:21px;font-weight:800}.lh-sub{font-size:13px;opacity:.9;margin-top:3px}
+ .lh-home{max-width:620px;margin:auto;padding:22px 16px 40px}.lh-intro{background:#fff;border:1px solid #dce9e7;border-radius:20px;padding:18px;box-shadow:0 8px 28px #1736340d;margin-bottom:18px}.lh-intro b{color:#0d5f5a}.lh-choice{width:100%;display:flex;align-items:center;gap:14px;text-align:left;background:#fff;border:1px solid #dce9e7;border-radius:20px;padding:18px;margin:12px 0;box-shadow:0 8px 28px #1736340d;cursor:pointer;color:#173634}.lh-ico{display:grid;place-items:center;flex:0 0 48px;height:48px;border-radius:16px;background:#e9f8f6;color:#167c76;font-size:24px}.lh-choice strong{display:block;font-size:18px;color:#0d5f5a}.lh-choice span{font-size:13px;color:#6b817f}.lh-arrow{margin-left:auto;font-size:23px;color:#42b8ad}
+ .lh-tabs{display:flex;gap:8px;overflow:auto;padding:14px 16px 2px;max-width:620px;margin:auto}.lh-tab{white-space:nowrap;border:1px solid #bfe3df;background:#fff;color:#167c76;border-radius:999px;padding:9px 14px;font-weight:700;cursor:pointer}.lh-tab.on{background:#167c76;color:#fff;border-color:#167c76}.lh-list{max-width:620px;margin:auto;padding:14px 16px 40px}.lh-location{font-size:19px;font-weight:800;color:#0d5f5a;margin:5px 2px 12px}.lh-card{background:#fff;border:1px solid #dce9e7;border-radius:20px;padding:18px;margin:12px 0;box-shadow:0 8px 28px #1736340d}.lh-name{font-size:18px;font-weight:800;margin-bottom:4px}.lh-phone{color:#6b817f;font-size:14px;margin-bottom:13px}.lh-actions{display:flex;gap:9px}.lh-action{flex:1;text-decoration:none;text-align:center;border-radius:13px;padding:11px 8px;font-weight:800;font-size:14px}.lh-wa{background:#e9f8f6;color:#0d5f5a;border:1px solid #bfe3df}.lh-sms{background:#167c76;color:#fff}.lh-pending{display:inline-block;background:#f5fbfa;color:#6b817f;border:1px dashed #b9cfcc;border-radius:12px;padding:10px 12px;font-size:13px}.lh-note{font-size:12px;color:#6b817f;margin-top:18px;line-height:1.45}
+ </style>`;
+ const inject=()=>{if(!document.getElementById('luaj-help-css'))document.head.insertAdjacentHTML('beforeend',css);if(!document.getElementById('luajHelpFab')){const b=document.createElement('button');b.id='luajHelpFab';b.type='button';b.textContent='Ayuda';b.onclick=openHome;document.body.appendChild(b)}};
+ const shell=(title,sub,body)=>{let o=document.getElementById('luajHelpOverlay');if(!o){o=document.createElement('section');o.id='luajHelpOverlay';document.body.appendChild(o)}o.innerHTML=`<div class="lh-head"><div class="lh-top"><button class="lh-back" type="button" aria-label="Regresar">‹</button><div><div class="lh-title">${title}</div><div class="lh-sub">${sub||''}</div></div></div></div>${body}`;o.querySelector('.lh-back').onclick=()=>o.remove();};
+ function openHome(){shell('Ayuda','Luaj Tahará',`<main class="lh-home"><div class="lh-intro"><b>¿En qué podemos ayudarte?</b><br><span style="color:#6b817f;font-size:14px">Encuentra el contacto adecuado de forma rápida y privada.</span></div><button class="lh-choice" id="lhB"><span class="lh-ico">⌕</span><span><strong>Bodeket</strong><span>Contactos organizados por localidad</span></span><span class="lh-arrow">›</span></button><button class="lh-choice" id="lhJ"><span class="lh-ico">?</span><span><strong>Sheelat Jajam</strong><span>Consulta y contactos de Jajamim</span></span><span class="lh-arrow">›</span></button></main>`);document.getElementById('lhB').onclick=()=>openBodeket('Polanco');document.getElementById('lhJ').onclick=()=>shell('Sheelat Jajam','Próximamente',`<main class="lh-home"><div class="lh-intro"><b>Sheelat Jajam</b><br><span style="color:#6b817f;font-size:14px">Agregaremos aquí los contactos que nos proporciones, sin inventar información.</span></div></main>`)};
+ function openBodeket(loc){const tabs=Object.keys(groups).map(x=>`<button class="lh-tab ${x===loc?'on':''}" data-loc="${x}">${x}</button>`).join('');const cards=groups[loc].map(p=>{const phone=p.phone?`<div class="lh-phone">${p.phone}</div>`:'';let actions='';if(p.phone){const intl='52'+p.phone;actions=`<div class="lh-actions">${p.kind==='wa'?`<a class="lh-action lh-wa" href="https://wa.me/${intl}" target="_blank" rel="noopener">WhatsApp</a>`:''}<a class="lh-action lh-sms" href="sms:+${intl}">SMS</a></div>`}else actions='<span class="lh-pending">Teléfono pendiente</span>';return `<article class="lh-card"><div class="lh-name">${p.name}</div>${phone}${actions}</article>`}).join('');shell('Bodeket','Contactos por localidad',`<nav class="lh-tabs">${tabs}</nav><main class="lh-list"><div class="lh-location">${loc}</div>${cards}<div class="lh-note">Los contactos se muestran sin fotografías. Verifica el destinatario antes de enviar información personal o sensible.</div></main>`);document.querySelectorAll('.lh-tab').forEach(b=>b.onclick=()=>openBodeket(b.dataset.loc))}
+ setTimeout(inject,0);authListeners.push(()=>setTimeout(inject,150));
+})();
