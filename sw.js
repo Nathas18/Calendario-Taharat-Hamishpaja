@@ -1,4 +1,4 @@
-const CACHE='luaj-tahara-pwa-v7';
+const CACHE='luaj-tahara-pwa-v8';
 const CORE=[
   './',
   './index.html',
@@ -9,7 +9,7 @@ const CORE=[
   './pwa-install.js',
   './icon.svg',
   './icon-maskable.svg',
-  ...Array.from({length:17},(_,i)=>`./app.part${i+1}.txt`)
+  ...Array.from({length:18},(_,i)=>`./app.part${i+1}.txt`)
 ];
 
 self.addEventListener('install',event=>{
