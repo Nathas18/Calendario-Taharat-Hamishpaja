@@ -31,8 +31,11 @@
   ]
  };
  const css=`<style id="luaj-contact-tabs-css">
- .mainTabs{display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px!important}
- .mainTabs .mainTab{min-width:0;padding:10px 5px!important;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+ .mainTabs{display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px!important;align-items:stretch}
+ .mainTabs .mainTab{min-width:0;padding:10px 5px!important;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;order:1}
+ #tabBodeket{order:1}#tabJajamim{order:2}#tabTevilot{order:3}#tabHalajot{order:4}
+ #tabCalendar{order:5;grid-column:1/-1!important;width:100%;font-size:15px!important;padding:13px 12px!important;border-radius:14px!important;background:#e9f8f6!important;color:#0d5f5a!important;border:1px solid #9fd7d1!important;box-shadow:0 5px 16px rgba(23,96,90,.08)}
+ #tabCalendar.active{background:linear-gradient(135deg,#42b8ad,#258f87)!important;color:#fff!important;border-color:transparent!important;box-shadow:0 7px 20px rgba(23,96,90,.2)}
  .contactView{padding:2px 0 24px;color:#173634}
  .contactHero{background:linear-gradient(135deg,#f7fffe,#e4f7f4);border:1px solid #cbe5e1;border-radius:20px;padding:20px;margin-bottom:14px}
  .contactEyebrow{font-size:12px;font-weight:900;letter-spacing:.08em;text-transform:uppercase;color:#167c76}
@@ -46,40 +49,44 @@
  .contactName{font-size:18px;font-weight:900;color:#173634;margin-bottom:5px}.contactPhone{font-size:14px;color:#6b817f;margin-bottom:12px}
  .contactAction{display:block;text-align:center;text-decoration:none;border-radius:12px;padding:11px 9px;font-size:14px;font-weight:900;background:linear-gradient(135deg,#42b8ad,#258f87);color:#fff}
  .contactAction.sms{background:#e9f8f6;color:#0d5f5a;border:1px solid #bfe3df}
- .contactPending{display:inline-block;background:#f5fbfa;color:#6b817f;border:1px dashed #b9cfcc;border-radius:12px;padding:10px 12px;font-size:13px}
- .contactNote{font-size:12px;color:#6b817f;margin-top:16px;line-height:1.45}
  .jajamPlaceholder{background:#fff;border:1px solid #dce9e7;border-radius:18px;padding:22px;box-shadow:0 8px 24px rgba(23,96,90,.07);color:#5b7774}.jajamPlaceholder b{display:block;color:#0d5f5a;font-size:18px;margin-bottom:5px}
- @media(max-width:620px){.mainTabs .mainTab{font-size:11px;padding:9px 2px!important}.contactGrid{grid-template-columns:1fr}.contactHero{padding:17px}.contactHero h2{font-size:24px}}
+ .contactNote{font-size:12px;color:#6b817f;margin-top:16px;line-height:1.45}
+ @media(max-width:620px){.mainTabs .mainTab{font-size:10px;padding:9px 2px!important}.mainTabs{gap:5px!important}#tabCalendar{font-size:14px!important;padding:12px 10px!important}.contactGrid{grid-template-columns:1fr}.contactHero{padding:17px}.contactHero h2{font-size:24px}}
  </style>`;
  function renderBodeket(loc){
   const view=document.getElementById('bodeketView');if(!view)return;
   const places=Object.keys(groups).map(x=>`<button class="contactPlace ${x===loc?'on':''}" type="button" data-place="${x}">${x}</button>`).join('');
   const cards=groups[loc].map(p=>{
-   if(!p.phone)return `<article class="contactCard"><div class="contactName">${p.name}</div><span class="contactPending">Teléfono pendiente</span></article>`;
+   if(!p.phone)return `<article class="contactCard"><div class="contactName">${p.name}</div></article>`;
    const intl='52'+p.phone;
    const action=p.kind==='wa'?`<a class="contactAction" href="https://wa.me/${intl}" target="_blank" rel="noopener">WhatsApp</a>`:`<a class="contactAction sms" href="sms:+${intl}">SMS</a>`;
    return `<article class="contactCard"><div class="contactName">${p.name}</div><div class="contactPhone">${p.phone}</div>${action}</article>`;
   }).join('');
-  view.innerHTML=`<div class="contactHero"><div class="contactEyebrow">Luaj Tahará</div><h2>👩 Bodeket</h2><p>Contactos organizados por localidad.</p></div><div class="contactPlaces">${places}</div><div class="contactLocation">${loc}</div><div class="contactGrid">${cards}</div><div class="contactNote">Verifica el nombre y el número antes de enviar información personal o sensible.</div>`;
+  view.innerHTML=`<div class="contactHero"><div class="contactEyebrow">Luaj Tahará</div><h2>👩🏻 Bodeket</h2><p>Contactos organizados por localidad.</p></div><div class="contactPlaces">${places}</div><div class="contactLocation">${loc}</div><div class="contactGrid">${cards}</div><div class="contactNote">Verifica el nombre y el número antes de enviar información personal o sensible.</div>`;
   view.querySelectorAll('.contactPlace').forEach(b=>b.onclick=()=>renderBodeket(b.dataset.place));
  }
- function setActive(id){document.querySelectorAll('.mainTab').forEach(b=>b.classList.toggle('active',b.id===id));}
- function showBodeket(){const cal=document.getElementById('calendarView'),hal=document.getElementById('halajotView'),bod=document.getElementById('bodeketView'),jaj=document.getElementById('jajamimView');if(cal)cal.hidden=true;if(hal)hal.hidden=true;if(jaj)jaj.hidden=true;if(bod)bod.hidden=false;setActive('tabBodeket')}
- function showJajamim(){const cal=document.getElementById('calendarView'),hal=document.getElementById('halajotView'),bod=document.getElementById('bodeketView'),jaj=document.getElementById('jajamimView');if(cal)cal.hidden=true;if(hal)hal.hidden=true;if(bod)bod.hidden=true;if(jaj)jaj.hidden=false;setActive('tabJajamim')}
- function hideCustom(){const bod=document.getElementById('bodeketView'),jaj=document.getElementById('jajamimView');if(bod)bod.hidden=true;if(jaj)jaj.hidden=true}
+ function allViews(){return ['calendarView','halajotView','bodeketView','jajamimView','tevilotView'].map(id=>document.getElementById(id)).filter(Boolean)}
+ function setActive(id){document.querySelectorAll('.mainTab').forEach(b=>b.classList.toggle('active',b.id===id))}
+ function showOnly(viewId,tabId){allViews().forEach(v=>v.hidden=v.id!==viewId);setActive(tabId)}
+ function showBodeket(){showOnly('bodeketView','tabBodeket')}
+ function showJajamim(){showOnly('jajamimView','tabJajamim')}
+ function showTevilot(){showOnly('tevilotView','tabTevilot')}
+ function hideCustom(){['bodeketView','jajamimView','tevilotView'].forEach(id=>{const v=document.getElementById(id);if(v)v.hidden=true})}
  function install(attempt=0){
   const nav=document.querySelector('.mainTabs'),calBtn=document.getElementById('tabCalendar'),halBtn=document.getElementById('tabHalajot'),hal=document.getElementById('halajotView');
   if(!nav||!calBtn||!halBtn||!hal){if(attempt<30)setTimeout(()=>install(attempt+1),100);return}
   document.getElementById('luajHelpFab')?.remove();document.getElementById('luajHelpOverlay')?.remove();document.getElementById('luaj-help-css')?.remove();
   if(!document.getElementById('luaj-contact-tabs-css'))document.head.insertAdjacentHTML('beforeend',css);
   calBtn.textContent='📅 Calendario';halBtn.textContent='📖 Halajot';
-  let b=document.getElementById('tabBodeket');if(!b){b=document.createElement('button');b.className='mainTab';b.id='tabBodeket';b.type='button';nav.insertBefore(b,halBtn)}b.textContent='👩 Bodeket';
-  let j=document.getElementById('tabJajamim');if(!j){j=document.createElement('button');j.className='mainTab';j.id='tabJajamim';j.type='button';nav.insertBefore(j,halBtn)}j.textContent='🎩 Jajamim';
+  let b=document.getElementById('tabBodeket');if(!b){b=document.createElement('button');b.className='mainTab';b.id='tabBodeket';b.type='button';nav.insertBefore(b,halBtn)}b.textContent='👩🏻 Bodeket';
+  let j=document.getElementById('tabJajamim');if(!j){j=document.createElement('button');j.className='mainTab';j.id='tabJajamim';j.type='button';nav.insertBefore(j,halBtn)}j.textContent='🧔🏻‍♂️ Jajamim';
+  let t=document.getElementById('tabTevilot');if(!t){t=document.createElement('button');t.className='mainTab';t.id='tabTevilot';t.type='button';nav.insertBefore(t,halBtn)}t.textContent='💧 Tevilot';
   const main=hal.parentElement;
   let bv=document.getElementById('bodeketView');if(!bv){bv=document.createElement('section');bv.id='bodeketView';bv.className='contactView';bv.hidden=true;main.insertBefore(bv,hal)}
-  let jv=document.getElementById('jajamimView');if(!jv){jv=document.createElement('section');jv.id='jajamimView';jv.className='contactView';jv.hidden=true;main.insertBefore(jv,hal)}jv.innerHTML='<div class="contactHero"><div class="contactEyebrow">Luaj Tahará</div><h2>🎩 Jajamim</h2><p>Contacto para Sheelat Jajam.</p></div><div class="jajamPlaceholder"><b>Jajamim</b>Los contactos se agregarán aquí cuando nos pases las capturas correspondientes.</div>';
+  let jv=document.getElementById('jajamimView');if(!jv){jv=document.createElement('section');jv.id='jajamimView';jv.className='contactView';jv.hidden=true;main.insertBefore(jv,hal)}jv.innerHTML='<div class="contactHero"><div class="contactEyebrow">Luaj Tahará</div><h2>🧔🏻‍♂️ Jajamim</h2><p>Contacto para Sheelat Jajam.</p></div><div class="jajamPlaceholder"><b>Jajamim</b>Los contactos se agregarán aquí cuando nos pases las capturas correspondientes.</div>';
+  let tv=document.getElementById('tevilotView');if(!tv){tv=document.createElement('section');tv.id='tevilotView';tv.className='contactView';tv.hidden=true;main.insertBefore(tv,hal)}tv.innerHTML='<div class="contactHero"><div class="contactEyebrow">Luaj Tahará</div><h2>💧 Tevilot</h2><p>Información y recursos relacionados con Tevilot.</p></div><div class="jajamPlaceholder"><b>Tevilot</b>Esta sección ya quedó preparada para agregar la información que quieras mostrar aquí.</div>';
   renderBodeket('Polanco');
-  b.onclick=showBodeket;j.onclick=showJajamim;
+  b.onclick=showBodeket;j.onclick=showJajamim;t.onclick=showTevilot;
   calBtn.addEventListener('click',hideCustom);halBtn.addEventListener('click',hideCustom);
  }
  setTimeout(()=>install(),0);authListeners.push(()=>setTimeout(()=>install(),150));
