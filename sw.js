@@ -1,4 +1,4 @@
-const CACHE='luaj-tahara-pwa-v1';
+const CACHE='luaj-tahara-pwa-v2';
 const CORE=[
   './',
   './index.html',
