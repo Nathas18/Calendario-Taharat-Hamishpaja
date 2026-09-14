@@ -1,0 +1,21 @@
+
+(function addVerifiedPolancoTevila(){
+ const add=()=>{
+  const view=document.getElementById('tevilotView');
+  const tab=document.getElementById('tabTevilot');
+  if(!view||!tab)return;
+  tab.addEventListener('click',()=>setTimeout(()=>{
+   const places=view.querySelector('.contactPlaces');
+   if(places&&!places.querySelector('[data-extra-polanco]')){
+    const b=document.createElement('button');b.className='contactPlace';b.type='button';b.dataset.extraPolanco='1';b.textContent='Polanco';places.appendChild(b);
+    b.onclick=()=>{
+     view.querySelectorAll('.contactPlace').forEach(x=>x.classList.remove('on'));b.classList.add('on');
+     const loc=view.querySelector('.contactLocation');if(loc)loc.textContent='Polanco';
+     const grid=view.querySelector('.contactGrid');if(!grid)return;
+     grid.innerHTML=`<article class="contactCard"><div class="contactName">Tebilá Jovanna y Susan Cojab</div><div class="tevilaAddress">📍 Edgar Allan Poe 231, Polanco, CDMX</div><div class="tevilaContact"><a href="tel:+525611685858">📞 Gela · 5611685858</a></div><div class="tevilaContact"><a href="tel:+525536352025">📞 Sari · 5536352025</a></div><a class="contactAction wazeAction" href="https://www.waze.com/ul?q=Edgar%20Allan%20Poe%20231%2C%20Polanco%2C%20CDMX&navigate=yes" target="_blank" rel="noopener">🚗 Ir con Waze</a></article>`;
+    };
+   }
+  },50));
+ };
+ setTimeout(add,300);authListeners.push(()=>setTimeout(add,350));
+})();
