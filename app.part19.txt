@@ -1,0 +1,84 @@
+
+(function luajOnaDetailsAndSunset(){
+ const CITIES={
+  cdmx:{label:'CDMX',lat:19.4326,lon:-99.1332,tz:-6},
+  acapulco:{label:'Acapulco',lat:16.8531,lon:-99.8237,tz:-6},
+  cuernavaca:{label:'Cuernavaca',lat:18.9242,lon:-99.2216,tz:-6},
+  valle:{label:'Valle de Bravo',lat:19.1950,lon:-100.1310,tz:-6}
+ };
+ function ensureSetting(){
+  state.settings=state.settings||{};
+  if(!CITIES[state.settings.sunsetCity])state.settings.sunsetCity='cdmx';
+ }
+ function ensureCityControl(){
+  ensureSetting();
+  const settings=document.querySelector('.settings');
+  if(!settings)return;
+  let select=document.getElementById('sunsetCity');
+  if(!select){
+   const label=document.createElement('label');
+   label.id='sunsetCityWrap';
+   label.textContent='Ciudad para puesta del sol';
+   select=document.createElement('select');
+   select.id='sunsetCity';
+   Object.entries(CITIES).forEach(([value,c])=>{const o=document.createElement('option');o.value=value;o.textContent=c.label;select.appendChild(o)});
+   label.appendChild(select);
+   settings.appendChild(label);
+   select.onchange=()=>{state.settings.sunsetCity=select.value;save();};
+  }
+  select.value=state.settings.sunsetCity;
+ }
+ function dayOfYear(d){const start=new Date(d.getFullYear(),0,0,12);return Math.floor((new Date(d.getFullYear(),d.getMonth(),d.getDate(),12)-start)/86400000)}
+ function sunsetMinutes(d,city){
+  const n=dayOfYear(d),gamma=2*Math.PI/365*(n-1);
+  const eq=229.18*(0.000075+0.001868*Math.cos(gamma)-0.032077*Math.sin(gamma)-0.014615*Math.cos(2*gamma)-0.040849*Math.sin(2*gamma));
+  const decl=0.006918-0.399912*Math.cos(gamma)+0.070257*Math.sin(gamma)-0.006758*Math.cos(2*gamma)+0.000907*Math.sin(2*gamma)-0.002697*Math.cos(3*gamma)+0.00148*Math.sin(3*gamma);
+  const lat=city.lat*Math.PI/180;
+  const cosH=(Math.cos(90.833*Math.PI/180)/(Math.cos(lat)*Math.cos(decl)))-Math.tan(lat)*Math.tan(decl);
+  if(cosH<-1||cosH>1)return null;
+  const ha=Math.acos(cosH)*180/Math.PI;
+  return 720-4*city.lon-eq+city.tz*60+4*ha;
+ }
+ function formatClock(minutes){
+  if(minutes==null)return 'No disponible';
+  minutes=((minutes%1440)+1440)%1440;
+  let h=Math.floor(minutes/60),m=Math.round(minutes%60);
+  if(m===60){h=(h+1)%24;m=0}
+  const suffix=h>=12?'p. m.':'a. m.',h12=h%12||12;
+  return h12+':'+String(m).padStart(2,'0')+' '+suffix;
+ }
+ function civilTitle(d){
+  let s=d.toLocaleDateString('es-MX',{weekday:'long',day:'numeric',month:'long'});
+  return s.charAt(0).toUpperCase()+s.slice(1);
+ }
+ function hebTitle(d,ona){
+  const hp=hebParts(d);if(!hp)return ona==='yom'?'Onat Yom':'Onat Laila';
+  return (ona==='yom'?'Onat Yom':'Onat Laila')+' · '+hp.day+' de '+hMonthEs(hp.month)+' de '+hp.year;
+ }
+ function decorateOnaSheet(d,ona){
+  ensureSetting();ensureCityControl();
+  const title=document.getElementById('selTitle'),sub=document.getElementById('selSub'),choices=document.getElementById('choices');
+  if(!title||!sub||!choices)return;
+  title.textContent=civilTitle(d);
+  sub.innerHTML='<div style="font-size:18px;font-weight:800;color:#5b7774;margin-top:4px">'+escapeHtml(hebTitle(d,ona))+'</div>';
+  const holiday=holidayFor(d),holidayText=holiday?(ona==='laila'?holiday.night:holiday.day):'';
+  let info=document.getElementById('onaContextInfo');
+  if(info)info.remove();
+  info=document.createElement('div');info.id='onaContextInfo';info.style.cssText='margin:12px 0 14px;padding:12px 14px;border:1px solid #dce9e7;border-radius:14px;background:#f7fbfa;color:#173634;line-height:1.45';
+  const lines=[];
+  if(holidayText)lines.push('<div><b>🕯️ '+escapeHtml(holidayText)+'</b></div>');
+  if(ona==='yom'){
+   const city=CITIES[state.settings.sunsetCity]||CITIES.cdmx;
+   lines.push('<div style="margin-top:'+(holidayText?'7':'0')+'px"><b>🌇 Puesta del sol:</b> '+escapeHtml(formatClock(sunsetMinutes(d,city)))+' · '+escapeHtml(city.label)+'</div>');
+  }
+  if(lines.length){info.innerHTML=lines.join('');choices.parentNode.insertBefore(info,choices)}
+ }
+ const baseOpenSheet=openSheet;
+ openSheet=function(d,o){baseOpenSheet(d,o);decorateOnaSheet(d,o)};
+ const baseOpenAlertDetails=openAlertDetails;
+ openAlertDetails=function(d,o,alerts){baseOpenAlertDetails(d,o,alerts);decorateOnaSheet(d,o)};
+ const baseSyncControls=syncControls;
+ syncControls=function(){baseSyncControls();ensureSetting();ensureCityControl()};
+ setTimeout(()=>{ensureSetting();ensureCityControl()},250);
+ authListeners.push(()=>setTimeout(()=>{ensureSetting();ensureCityControl()},350));
+})();
