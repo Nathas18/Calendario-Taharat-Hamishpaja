@@ -79,7 +79,13 @@
 
   const start=()=>{
     if('serviceWorker' in navigator){
-      navigator.serviceWorker.register('./sw.js',{scope:'./'}).catch(error=>console.error('Service Worker:',error));
+      let reloading=false;
+      navigator.serviceWorker.addEventListener('controllerchange',()=>{
+        if(reloading)return;
+        reloading=true;
+        window.location.reload();
+      });
+      navigator.serviceWorker.register('./sw.js',{scope:'./'}).then(reg=>reg.update()).catch(error=>console.error('Service Worker:',error));
     }
     if(!isStandalone()&&(isIOS()||isSafari()||deferredPrompt))ensureButton();
     setTimeout(()=>{if(!isStandalone())ensureButton()},1200);
