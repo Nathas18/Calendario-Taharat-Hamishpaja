@@ -1,0 +1,43 @@
+
+// Reporte PDF profesional del historial. Solo lectura: no modifica eventos ni reglas halájicas.
+(function luajHistoryPdf(){
+ const TYPE={reiya:['Reiyá',[200,75,85]],ketem:['Ketem',[220,115,145]],hefsek:['Hefsek Tahará',[22,135,125]],note:['Nota',[95,116,113]],symptom:['Síntoma',[95,116,113]],kavua_no:['Ausencia de Kavúa confirmada',[111,78,140]]};
+ function loadJsPdf(){return new Promise((ok,fail)=>{if(window.jspdf&&window.jspdf.jsPDF)return ok(window.jspdf.jsPDF);let s=document.querySelector('script[data-luaj-jspdf]');if(s){s.addEventListener('load',()=>ok(window.jspdf.jsPDF),{once:true});s.addEventListener('error',fail,{once:true});return}s=document.createElement('script');s.src='https://cdn.jsdelivr.net/npm/jspdf@2.5.2/dist/jspdf.umd.min.js';s.async=true;s.dataset.luajJspdf='1';s.onload=()=>ok(window.jspdf.jsPDF);s.onerror=fail;document.head.appendChild(s)})}
+ function onaName(o){return o==='yom'?'Yom':o==='laila'?'Laila':'—'}
+ function civil(iso){return atNoon(iso).toLocaleDateString('es-MX',{day:'numeric',month:'long',year:'numeric'})}
+ function hebrew(iso){const h=hebParts(atNoon(iso));return h?`${h.day} de ${hMonthEs(h.month)} de ${h.year}`:heb(atNoon(iso))}
+ function detail(e){return String(e.text||e.note||e.label||e.value||'').trim()}
+ function reportEvents(){return state.events.filter(e=>e&&e.date&&TYPE[e.type]).slice().sort((a,b)=>a.date.localeCompare(b.date)||String(a.ona).localeCompare(String(b.ona)))}
+ function detectPatterns(){
+  const r=state.events.filter(e=>e.type==='reiya').slice().sort((a,b)=>a.date.localeCompare(b.date)||a.ona.localeCompare(b.ona)),out=[],seen=new Set();
+  for(let i=2;i<r.length;i++){const x=r.slice(i-2,i+1),hp=x.map(z=>hebParts(atNoon(z.date)));if(hp.every(Boolean)&&sameOna(x)&&consecutiveHebMonths(x)&&hp[0].day===hp[1].day&&hp[1].day===hp[2].day){const k=`j-${hp[2].day}-${x[2].ona}-${x[2].date}`;if(!seen.has(k)){seen.add(k);out.push({date:x[2].date,title:'Posible Veset HaJódesh Kavúa',detail:`3 Reiyot en el día ${hp[2].day} del mes hebreo, en la misma oná (${onaName(x[2].ona)}).`,dates:x.map(z=>`${hebrew(z.date)} · ${onaName(z.ona)}`)})}}}
+  for(let i=3;i<r.length;i++){const x=r.slice(i-3,i+1);if(!sameOna(x))continue;const ints=[1+dayDiff(x[0].date,x[1].date),1+dayDiff(x[1].date,x[2].date),1+dayDiff(x[2].date,x[3].date)];if(ints[0]===ints[1]&&ints[1]===ints[2])out.push({date:x[3].date,title:'Posible Veset Haflagá Kavúa',detail:`4 Reiyot produjeron 3 Haflagot iguales de ${ints[0]} días, en la misma oná (${onaName(x[3].ona)}).`,dates:x.map(z=>`${hebrew(z.date)} · ${onaName(z.ona)}`)})}
+  return out.sort((a,b)=>a.date.localeCompare(b.date));
+ }
+ function install(){
+  const old=document.getElementById('exportData');if(!old||old.dataset.pdfReady)return;
+  const btn=old.cloneNode(true);btn.dataset.pdfReady='1';btn.textContent='📄 Descargar mi historial en PDF';old.replaceWith(btn);
+  const card=btn.closest('.card'),notice=card&&card.querySelector('.notice');if(notice)notice.textContent='Genera un reporte privado, claro y cronológico para conservar o consultar con tu Rab/Posek.';
+  btn.onclick=async()=>{const original=btn.textContent;btn.disabled=true;btn.textContent='Preparando PDF…';try{const JsPDF=await loadJsPdf();makePdf(JsPDF)}catch(e){console.error(e);alert('No se pudo generar el PDF. Verifica tu conexión e inténtalo nuevamente.')}finally{btn.disabled=false;btn.textContent=original}}
+ }
+ function makePdf(JsPDF){
+  const ev=reportEvents(),patterns=detectPatterns(),doc=new JsPDF({unit:'mm',format:'a4'}),W=210,H=297,M=16,C={teal:[22,135,125],dark:[23,54,52],muted:[86,116,112],pale:[235,247,245],line:[210,230,226],purple:[111,78,140],red:[200,75,85]};let y=0,page=0;
+  const set=(c)=>doc.setTextColor(...c),fill=(c)=>doc.setFillColor(...c),stroke=(c)=>doc.setDrawColor(...c);
+  function header(first=false){page++;fill(C.teal);doc.rect(0,0,W,first?45:18,'F');set([255,255,255]);doc.setFont('helvetica','bold');doc.setFontSize(first?21:12);doc.text(first?'Mi historial en Luaj Tahará':'Luaj Tahará · Mi historial',M,first?21:11);if(first){doc.setFont('helvetica','normal');doc.setFontSize(10);doc.text('Reporte personal para seguimiento y consulta',M,29);doc.setFontSize(8.5);doc.text('Generado el '+new Date().toLocaleDateString('es-MX',{day:'numeric',month:'long',year:'numeric'}),M,37)}y=first?55:27}
+  function footer(){set([120,140,137]);doc.setFont('helvetica','normal');doc.setFontSize(7.5);doc.text('Luaj Tahará · Reporte privado · Página '+page,M,H-8);doc.text('Este documento organiza registros; no constituye un psak halájico.',W-M,H-8,{align:'right'})}
+  function next(need=25){if(y+need>H-18){footer();doc.addPage();header(false)}}
+  function title(t){next(16);set(C.dark);doc.setFont('helvetica','bold');doc.setFontSize(14);doc.text(t,M,y);y+=8;stroke(C.line);doc.line(M,y-3,W-M,y-3)}
+  function wrapped(text,x,width,size=9,color=C.muted,style='normal'){set(color);doc.setFont('helvetica',style);doc.setFontSize(size);const lines=doc.splitTextToSize(String(text),width);doc.text(lines,x,y);y+=lines.length*(size*.42)+2}
+  header(true);
+  const re=ev.filter(e=>e.type==='reiya'),ke=ev.filter(e=>e.type==='ketem'),he=ev.filter(e=>e.type==='hefsek');
+  fill(C.pale);doc.roundedRect(M,y,W-2*M,28,4,4,'F');set(C.dark);doc.setFont('helvetica','bold');doc.setFontSize(9);doc.text('RESUMEN DEL HISTORIAL',M+6,y+7);const stats=[['Reiyot',re.length],['Ketamim',ke.length],['Hefsek',he.length],['Patrones',patterns.length]];stats.forEach((s,i)=>{const x=M+6+i*43;set(C.teal);doc.setFontSize(16);doc.text(String(s[1]),x,y+18);set(C.muted);doc.setFontSize(7.5);doc.text(s[0],x+10,y+18)});y+=36;
+  if(ev.length){wrapped('Periodo registrado: '+civil(ev[0].date)+' — '+civil(ev[ev.length-1].date),M,W-2*M,9,C.muted)}else wrapped('Aún no hay registros en el historial de esta cuenta.',M,W-2*M,9,C.muted);
+  if(patterns.length){title('Patrones matemáticos observados');patterns.forEach(p=>{next(32);fill([247,242,251]);stroke([221,207,233]);doc.roundedRect(M,y,W-2*M,Math.max(27,16+p.dates.length*4),3,3,'FD');set(C.purple);doc.setFont('helvetica','bold');doc.setFontSize(10);doc.text(p.title,M+5,y+7);y+=12;wrapped(p.detail,M+5,W-2*M-10,8.5,C.dark);p.dates.forEach(d=>wrapped('• '+d,M+7,W-2*M-14,7.7,C.muted));y+=4})}
+  title('Historial cronológico');
+  ev.forEach(e=>{const info=TYPE[e.type]||[e.type,C.muted],d=detail(e),boxH=d?30:24;next(boxH+5);fill([255,255,255]);stroke(C.line);doc.roundedRect(M,y,W-2*M,boxH,3,3,'FD');fill(info[1]);doc.roundedRect(M,y,3,boxH,1.5,1.5,'F');set(C.dark);doc.setFont('helvetica','bold');doc.setFontSize(9.5);doc.text(info[0],M+7,y+7);set(C.teal);doc.setFontSize(8);doc.text(hebrew(e.date)+' · '+onaName(e.ona),W-M-5,y+7,{align:'right'});set(C.muted);doc.setFont('helvetica','normal');doc.setFontSize(8);doc.text(civil(e.date),M+7,y+14);if(d){const lines=doc.splitTextToSize(d,W-2*M-14);doc.text(lines.slice(0,3),M+7,y+20)}y+=boxH+4});
+  title('Para revisar con su Rab/Posek');wrapped('Si alguna fecha, oná, intervalo o patrón le genera duda, muestre este reporte junto con cualquier detalle adicional que recuerde. Los patrones señalados son coincidencias matemáticas detectadas a partir de los registros ingresados y deben ser revisados por una autoridad halájica.',M,W-2*M,9,C.dark);
+  fill([247,250,249]);stroke(C.line);doc.roundedRect(M,y+3,W-2*M,24,3,3,'FD');y+=10;wrapped('Importante: Luaj Tahará organiza la información registrada por la usuaria y facilita su seguimiento. Este reporte no determina por sí solo un psak halájico.',M+5,W-2*M-10,8.5,C.muted,'bold');footer();
+  doc.save('Mi-Historial-Luaj-Tahara-'+localISO(new Date())+'.pdf');
+ }
+ setTimeout(install,100);authListeners.push(()=>setTimeout(install,250));
+})();
