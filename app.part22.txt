@@ -1,0 +1,19 @@
+
+// Indicador visual de HOY. No modifica cálculos, eventos ni reglas halájicas.
+(function currentDayHighlight(){
+ function markToday(){
+   const grid=document.getElementById('grid');if(!grid)return;
+   grid.querySelectorAll('.day.today').forEach(el=>el.classList.remove('today'));
+   const first=hebMonthStart(view),today=localISO(new Date());
+   const cells=[...grid.querySelectorAll('.day:not(.out)')];
+   for(let i=0;i<cells.length;i++){
+     const d=new Date(first);d.setDate(first.getDate()+i);
+     if(localISO(d)===today){cells[i].classList.add('today');cells[i].setAttribute('aria-current','date');break}
+   }
+ }
+ const originalRender=render;
+ render=function(){const result=originalRender.apply(this,arguments);markToday();return result};
+ setTimeout(markToday,100);
+ // Si la app queda abierta al cambiar de día, actualiza el indicador sin tocar datos.
+ setInterval(markToday,60000);
+})();
