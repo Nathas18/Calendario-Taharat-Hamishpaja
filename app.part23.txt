@@ -4,7 +4,7 @@
  function init(){
   const bar=document.getElementById('userBar'),logout=document.getElementById('logoutBtn'),main=document.getElementById('appMain');
   if(!bar||!logout||!main||document.getElementById('settingsBtn'))return;
-  const btn=document.createElement('button');btn.id='settingsBtn';btn.className='settingsBtn';btn.type='button';btn.innerHTML='<span aria-hidden="true">⚙</span> Configuración';bar.insertBefore(btn,logout);
+  const btn=document.createElement('button');btn.id='settingsBtn';btn.className='settingsBtn';btn.type='button';btn.setAttribute('aria-label','Configuración');btn.title='Configuración';btn.innerHTML='<span aria-hidden="true">⚙</span>';bar.insertBefore(btn,logout);
   const modal=document.createElement('div');modal.id='settingsModal';modal.className='settingsModal';modal.setAttribute('aria-hidden','true');
   modal.innerHTML='<div class="settingsSheet" role="dialog" aria-modal="true" aria-labelledby="settingsTitle"><div class="settingsHead"><div><div class="settingsEyebrow">Luaj Tahará</div><h2 id="settingsTitle">Configuración</h2></div><button type="button" class="settingsClose" aria-label="Cerrar">×</button></div><div class="settingsTabs" role="tablist"><button type="button" class="settingsTab active" data-tab="personal">Personalizada</button><button type="button" class="settingsTab" data-tab="notifications">Notificaciones</button><button type="button" class="settingsTab" data-tab="history">Historial</button></div><div class="settingsPane active" data-pane="personal"><div class="settingsPaneIntro"><b>Configuración personalizada del sistema</b><span>Ajusta cómo se muestran y calculan tus avisos personales.</span></div><div class="settingsSlot" id="settingsPersonal"></div></div><div class="settingsPane" data-pane="notifications"><div class="settingsPaneIntro"><b>Notificaciones por correo</b><span>Administra aquí tus preferencias de avisos y recordatorios.</span></div><div class="settingsSlot" id="settingsNotifications"><div class="settingsEmpty">No hay opciones de notificación disponibles en esta versión.</div></div></div><div class="settingsPane" data-pane="history"><div class="settingsPaneIntro"><b>Historial de tu cuenta</b><span>Consulta, descarga o elimina los registros de este usuario.</span></div><div class="settingsSlot" id="settingsHistory"></div></div></div>';
   document.body.appendChild(modal);
@@ -13,13 +13,7 @@
   const history=cards.find(el=>{const b=el.querySelector(':scope > b');return b&&b.textContent.trim()==='Historial'});
   if(config){config.classList.add('settingsMovedCard');document.getElementById('settingsPersonal').appendChild(config)}
   if(history){history.classList.add('settingsMovedCard');document.getElementById('settingsHistory').appendChild(history)}
-  function moveNotificationCards(){
-   const candidates=[...main.querySelectorAll('.card')].filter(el=>!el.closest('#settingsModal'));
-   const notif=candidates.filter(el=>/notific|correo|email/i.test(el.textContent||''));
-   const slot=document.getElementById('settingsNotifications');
-   notif.forEach(el=>{el.classList.add('settingsMovedCard');slot.appendChild(el)});
-   const empty=slot.querySelector('.settingsEmpty');if(empty&&slot.querySelector('.card'))empty.remove();
-  }
+  function moveNotificationCards(){const candidates=[...main.querySelectorAll('.card')].filter(el=>!el.closest('#settingsModal'));const notif=candidates.filter(el=>/notific|correo|email/i.test(el.textContent||''));const slot=document.getElementById('settingsNotifications');notif.forEach(el=>{el.classList.add('settingsMovedCard');slot.appendChild(el)});const empty=slot.querySelector('.settingsEmpty');if(empty&&slot.querySelector('.card'))empty.remove()}
   moveNotificationCards();setTimeout(moveNotificationCards,700);
   function open(tab='personal'){modal.classList.add('show');modal.setAttribute('aria-hidden','false');document.body.classList.add('settingsOpen');select(tab)}
   function close(){modal.classList.remove('show');modal.setAttribute('aria-hidden','true');document.body.classList.remove('settingsOpen')}
