@@ -1,4 +1,4 @@
-const CACHE='luaj-tahara-pwa-v19';
+const CACHE='luaj-tahara-pwa-v20';
 const CORE=[
   './','./index.html','./manifest.webmanifest','./style.css','./theme-overrides.css','./app.js','./pwa-install.js','./icon.svg','./icon-maskable.svg',
   ...Array.from({length:25},(_,i)=>`./app.part${i+1}.txt`)
