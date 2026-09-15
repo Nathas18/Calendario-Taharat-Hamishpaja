@@ -1,0 +1,35 @@
+
+// Presentación de fecha civil para Onat Laila.
+// La Laila conserva internamente la fecha absoluta/hebreo del día siguiente para todos los cálculos.
+// Solo el encabezado visible usa la fecha civil de la casilla (la víspera), como en el calendario físico.
+(function civilDateForLailaSheet(){
+  function visibleCivilDate(d,ona){
+    const q=new Date(d);
+    if(ona==='laila')q.setDate(q.getDate()-1);
+    return q;
+  }
+  function formatCivil(d){
+    return d.toLocaleDateString('es-MX',{weekday:'long',day:'numeric',month:'long'});
+  }
+
+  const baseOpenSheet=openSheet;
+  openSheet=function(d,o){
+    const result=baseOpenSheet.apply(this,arguments);
+    const title=document.getElementById('selTitle');
+    const sub=document.getElementById('selSub');
+    if(title)title.textContent=formatCivil(visibleCivilDate(d,o))+' · '+(o==='yom'?'Onat Yom':'Onat Laila');
+    // La fecha hebrea permanece exactamente como estaba: Laila pertenece al día hebreo siguiente.
+    if(sub)sub.textContent=heb(d);
+    return result;
+  };
+
+  const baseOpenAlertDetails=openAlertDetails;
+  openAlertDetails=function(d,o,alerts){
+    const result=baseOpenAlertDetails.apply(this,arguments);
+    const title=document.getElementById('selTitle');
+    const sub=document.getElementById('selSub');
+    if(title)title.textContent='Avisos de '+(o==='yom'?'Onat Yom':'Onat Laila')+' · '+formatCivil(visibleCivilDate(d,o));
+    if(sub)sub.textContent=heb(d);
+    return result;
+  };
+})();
