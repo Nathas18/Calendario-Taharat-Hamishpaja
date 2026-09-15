@@ -1,0 +1,708 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="theme-color" content="#228B22" />
+<title>Sefer Torah 245 - Calendario de Escritura</title>
+<style>
+  :root{
+    --green:#228B22;
+    --green-dark:#176c17;
+    --green-soft:#eaf8ea;
+    --green-border:#b7dfb7;
+    --highlight:#C8FFC8;
+    --gray:#D3D3D3;
+    --gray-text:#707070;
+    --ink:#173017;
+    --muted:#607060;
+    --bg:#f5f8f4;
+    --card:#ffffff;
+    --shadow:0 8px 28px rgba(25,80,25,.08);
+  }
+
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{
+    margin:0;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;
+    color:var(--ink);
+    background:var(--bg);
+    -webkit-font-smoothing:antialiased;
+  }
+
+  .page{
+    width:min(1180px,100%);
+    margin:0 auto;
+    padding:18px 14px 54px;
+  }
+
+  .hero{
+    background:linear-gradient(145deg,#ffffff 0%,#f0fbf0 100%);
+    border:1px solid #d8ead8;
+    border-radius:24px;
+    box-shadow:var(--shadow);
+    padding:22px;
+    margin-bottom:18px;
+  }
+
+  .eyebrow{
+    font-size:13px;
+    font-weight:800;
+    letter-spacing:.08em;
+    color:var(--green-dark);
+    text-transform:uppercase;
+    margin-bottom:5px;
+  }
+
+  h1{
+    margin:0;
+    font-size:clamp(25px,5vw,40px);
+    line-height:1.05;
+    color:#164f16;
+  }
+
+  .hebrew-title{
+    margin-top:7px;
+    font-size:18px;
+    font-weight:700;
+    color:#3d6a3d;
+  }
+
+  .summary{
+    display:grid;
+    grid-template-columns:repeat(4,minmax(0,1fr));
+    gap:10px;
+    margin:18px 0 16px;
+  }
+
+  .stat{
+    background:#fff;
+    border:1px solid #dcecdc;
+    border-radius:15px;
+    padding:11px 12px;
+    min-height:68px;
+  }
+
+  .stat strong{display:block;font-size:18px;color:#1d6d1d;margin-top:4px}
+  .stat span{font-size:12px;color:var(--muted);font-weight:700}
+
+  .progress-wrap{
+    background:#e4eee4;
+    height:14px;
+    border-radius:999px;
+    overflow:hidden;
+    box-shadow:inset 0 1px 2px rgba(0,0,0,.08);
+  }
+
+  .progress-bar{
+    height:100%;
+    width:0%;
+    background:linear-gradient(90deg,#228B22,#36a736);
+    transition:width .25s ease;
+  }
+
+  .progress-text{
+    margin-top:8px;
+    font-weight:800;
+    color:#245524;
+    font-size:15px;
+  }
+
+  .actions{
+    display:grid;
+    grid-template-columns:1fr auto;
+    gap:10px;
+    margin-top:16px;
+  }
+
+  button{
+    appearance:none;
+    border:0;
+    border-radius:14px;
+    cursor:pointer;
+    font:inherit;
+    font-weight:850;
+    padding:14px 18px;
+    transition:transform .1s ease, filter .1s ease;
+  }
+  button:active{transform:scale(.99)}
+  .primary{background:var(--green);color:#fff;box-shadow:0 7px 18px rgba(34,139,34,.22)}
+  .secondary{background:#fff;color:var(--green-dark);border:1px solid #b8d9b8}
+
+  .legend{
+    display:flex;
+    flex-wrap:wrap;
+    gap:8px;
+    margin:12px 0 4px;
+  }
+  .chip{
+    display:inline-flex;
+    align-items:center;
+    gap:7px;
+    border-radius:999px;
+    padding:6px 10px;
+    font-size:12px;
+    font-weight:750;
+    background:#fff;
+    border:1px solid #dde8dd;
+  }
+  .dot{width:10px;height:10px;border-radius:3px;background:#fff;border:1px solid var(--green-border)}
+  .dot.gray{background:var(--gray);border-color:#bbb}
+  .dot.special{background:var(--highlight);border-color:#84d884}
+
+  details{
+    margin-top:12px;
+    border-top:1px solid #dce8dc;
+    padding-top:10px;
+    color:#536853;
+    font-size:12px;
+  }
+  summary{cursor:pointer;font-weight:800;color:#365e36}
+  details p{margin:7px 0 0;line-height:1.45}
+
+  .month{
+    background:var(--card);
+    border-radius:18px;
+    overflow:hidden;
+    border:1px solid #dbe9db;
+    box-shadow:0 4px 18px rgba(24,72,24,.05);
+    margin:18px 0;
+  }
+
+  .month-head{
+    background:var(--green);
+    color:#fff;
+    padding:14px 16px 12px;
+  }
+  .month-title{
+    font-size:22px;
+    font-weight:900;
+    line-height:1;
+  }
+  .month-meta{
+    margin-top:8px;
+    font-size:12px;
+    opacity:.95;
+    font-weight:650;
+  }
+
+  .table-head,.day-row{
+    display:grid;
+    grid-template-columns:42px minmax(125px,1.2fr) minmax(85px,.7fr) minmax(155px,1.35fr) minmax(100px,.8fr) minmax(120px,1fr);
+    align-items:center;
+    column-gap:8px;
+  }
+
+  .table-head{
+    background:#ecf5ec;
+    color:#356035;
+    font-size:11px;
+    font-weight:900;
+    text-transform:uppercase;
+    letter-spacing:.03em;
+    padding:9px 12px;
+    border-bottom:1px solid #d2e6d2;
+  }
+
+  .day-row{
+    position:relative;
+    padding:9px 12px;
+    min-height:50px;
+    background:#fff;
+    border-bottom:1px solid var(--green-border);
+    font-size:13px;
+  }
+  .day-row:last-child{border-bottom:0}
+  .day-row.no-write{
+    background:var(--gray);
+    color:var(--gray-text);
+    border-bottom-color:#bebebe;
+  }
+  .day-row.shushan{
+    background:var(--highlight);
+    border-bottom-color:#8ddd8d;
+    box-shadow:inset 4px 0 0 #2ca62c;
+  }
+  .day-row.done{
+    opacity:.62;
+    text-decoration:line-through;
+    text-decoration-thickness:1.5px;
+  }
+
+  .check-cell{display:flex;align-items:center;justify-content:center}
+  .done-check{
+    width:22px;
+    height:22px;
+    accent-color:var(--green);
+    cursor:pointer;
+  }
+  .done-check:disabled{cursor:not-allowed;opacity:.45}
+
+  .date-cell{font-weight:850;color:#264e26}
+  .no-write .date-cell{color:#606060}
+  .subnote{display:block;font-size:10px;font-weight:700;margin-top:2px;opacity:.8}
+  .col-cell,.r-cell,.today-cell,.acc-cell{font-weight:680}
+  .today-cell{color:#1f6f1f}
+  .no-write .today-cell,.no-write .col-cell,.no-write .r-cell,.no-write .acc-cell{color:#707070}
+  .no-write-label{font-weight:900;letter-spacing:.02em}
+
+  .sium-badge{
+    display:inline-block;
+    margin-left:6px;
+    border-radius:999px;
+    padding:2px 7px;
+    background:#176c17;
+    color:#fff;
+    font-size:10px;
+    text-decoration:none !important;
+  }
+
+  .footer{
+    text-align:center;
+    margin-top:26px;
+    color:#5f705f;
+    font-size:12px;
+  }
+
+  @media(max-width:760px){
+    .page{padding:10px 8px 36px}
+    .hero{border-radius:18px;padding:16px 13px}
+    .summary{grid-template-columns:1fr 1fr}
+    .actions{grid-template-columns:1fr}
+    button{width:100%;padding:14px 12px}
+    .table-head{display:none}
+    .day-row{
+      grid-template-columns:36px minmax(0,1fr) auto;
+      grid-template-areas:
+        "check date date"
+        "check col today"
+        "check reng acc";
+      row-gap:5px;
+      column-gap:8px;
+      padding:10px 10px;
+      font-size:12px;
+      min-height:68px;
+    }
+    .check-cell{grid-area:check;align-self:stretch}
+    .date-cell{grid-area:date;font-size:14px}
+    .col-cell{grid-area:col}
+    .r-cell{grid-area:reng}
+    .today-cell{grid-area:today;text-align:right}
+    .acc-cell{grid-area:acc;text-align:right}
+    .month{border-radius:14px;margin:14px 0}
+    .month-head{padding:12px 12px 10px}
+    .month-title{font-size:20px}
+    .month-meta{line-height:1.4}
+    .progress-text{font-size:14px}
+  }
+
+  @media print{
+    @page{size:A4;margin:9mm}
+    body{background:#fff}
+    .page{max-width:none;padding:0}
+    .hero{box-shadow:none;border:1px solid #b9d5b9;padding:12px;margin:0 0 10px}
+    .actions,.legend,details,.footer{display:none !important}
+    .summary{grid-template-columns:repeat(4,1fr);margin:10px 0}
+    .stat{min-height:auto;padding:7px}
+    .month{box-shadow:none;border-radius:0;margin:10px 0;break-inside:auto}
+    .month-head{print-color-adjust:exact;-webkit-print-color-adjust:exact}
+    .day-row,.table-head{print-color-adjust:exact;-webkit-print-color-adjust:exact}
+    .day-row{min-height:0;padding:5px 7px;font-size:10px}
+    .table-head{padding:5px 7px;font-size:8px}
+    .done-check{width:15px;height:15px}
+    .month-title{font-size:16px}
+    .month-meta{font-size:9px}
+    h1{font-size:24px}
+  }
+</style>
+</head>
+<body>
+<div class="page">
+  <section class="hero">
+    <div class="eyebrow">כתיבת ספר תורה · Ketivat Sefer Torah</div>
+    <h1>Sefer Torah 245 - Calendario de Escritura</h1>
+    <div class="hebrew-title">ספר תורה 245 · Sium / סיום: 18 Agosto 2027</div>
+
+    <div class="summary">
+      <div class="stat"><span>Inicio</span><strong>1 Nov 2026</strong></div>
+      <div class="stat"><span>Sium / סיום</span><strong>18 Ago 2027</strong></div>
+      <div class="stat"><span>Días de escritura</span><strong id="workdayCount">226</strong></div>
+      <div class="stat"><span>Meta</span><strong>245 columnas</strong></div>
+    </div>
+
+    <div class="progress-wrap" aria-label="Progreso total"><div class="progress-bar" id="progressBar"></div></div>
+    <div class="progress-text" id="progressText">Llevas 0 de 245 columnas - 0%</div>
+
+    <div class="actions">
+      <button class="primary" id="icsButton">Agregar los 226 días a mi Calendario iPhone</button>
+      <button class="secondary" id="printButton">Guardar como PDF</button>
+    </div>
+
+    <div class="legend">
+      <span class="chip"><span class="dot"></span> Día de escritura</span>
+      <span class="chip"><span class="dot gray"></span> NO SE ESCRIBE</span>
+      <span class="chip"><span class="dot special"></span> Shushan Purim · sí se trabaja</span>
+    </div>
+
+    <details>
+      <summary>Criterio del cálculo</summary>
+      <p>El plan mantiene 226 jornadas reales de escritura, respeta el ancla indicada de <b>24 Mar 2027 = Col 116-117</b> y termina exactamente en <b>Col 245 el 18 Ago 2027</b>. Para que esos tres hitos convivan con los renglones diarios indicados, la foliación contempla variaciones de renglones por columna dentro del plan.</p>
+    </details>
+  </section>
+
+  <main id="calendar"></main>
+
+  <div class="footer">Sefer Torah 245 · Calendario personal de escritura · שבת / Shabat: no se escribe</div>
+</div>
+
+<script>
+(() => {
+  'use strict';
+
+  const TOTAL_COLUMNS = 245;
+  const STORAGE_PREFIX = 'seferTorah245_done_';
+  const START = {y:2026,m:11,d:1};
+  const END   = {y:2027,m:8,d:18};
+
+  const dayRules = {
+    0:{name:'Dom', lines:37, start:'10:30', end:'13:00'},
+    1:{name:'Lun', lines:50, start:'10:30', end:'15:00'},
+    2:{name:'Mar', lines:50, start:'10:30', end:'15:00'},
+    3:{name:'Mié', lines:47, start:'10:30', end:'15:00'},
+    4:{name:'Jue', lines:50, start:'10:30', end:'15:00'},
+    5:{name:'Vie', lines:40, start:'10:30', end:'14:00'},
+    6:{name:'Sáb', lines:0,  start:'',      end:''}
+  };
+
+  const monthNames = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+  const monthShort = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+
+  const specialNoWrite = new Map([
+    ['2026-11-11','Rosh Jodesh Kislev · ראש חודש'],
+    ['2026-12-11','Rosh Jodesh Tevet · ראש חודש'],
+    ['2027-01-09','Rosh Jodesh Shevat · ראש חודש'],
+    ['2027-02-08','Rosh Jodesh Adar I · ראש חודש'],
+    ['2027-03-10','Rosh Jodesh Adar II · ראש חודש'],
+    ['2027-03-23','Purim · פורים'],
+    ['2027-04-08','Rosh Jodesh Nisan · ראש חודש'],
+    ['2027-05-08','Rosh Jodesh Iyar · ראש חודש'],
+    ['2027-06-06','Rosh Jodesh Sivan · ראש חודש'],
+    ['2027-06-12','Shavuot · שבועות'],
+    ['2027-06-13','Shavuot · שבועות'],
+    ['2027-07-06','Rosh Jodesh Tamuz · ראש חודש'],
+    ['2027-08-04','Rosh Jodesh Av · ראש חודש']
+  ]);
+
+  addRange(specialNoWrite, '2026-12-21', '2026-12-27', 'Vacaciones Janucá · חנוכה');
+  addRange(specialNoWrite, '2027-04-22', '2027-04-30', 'Pesaj · פסח');
+
+  const colCaps = buildColumnCapacities();
+  const colEnds = [];
+  let capSum = 0;
+  colCaps.forEach(c => { capSum += c; colEnds.push(capSum); });
+  const TOTAL_PLAN_LINES = capSum;
+
+  const days = buildDays();
+  const activeDays = days.filter(d => d.writable);
+
+  if (activeDays.length !== 226) console.warn('Esperaba 226 días de escritura y obtuve', activeDays.length);
+  const shushan = days.find(d => d.key === '2027-03-24');
+  if (!shushan || shushan.colStart !== 116 || shushan.colEnd !== 117) console.warn('Ancla Shushan Purim fuera de Col 116-117', shushan);
+  const finalDay = days.find(d => d.key === '2027-08-18');
+  if (!finalDay || finalDay.colEnd !== 245) console.warn('El Sium no termina en Col 245', finalDay);
+
+  renderCalendar(days);
+  restoreChecks();
+  updateProgress();
+
+  document.getElementById('icsButton').addEventListener('click', downloadICS);
+  document.getElementById('printButton').addEventListener('click', () => window.print());
+
+  function addRange(map, startKey, endKey, label){
+    let d = parseKey(startKey);
+    const end = parseKey(endKey);
+    while (d <= end){
+      map.set(dateKey(d), label);
+      d = nextDate(d);
+    }
+  }
+
+  function buildColumnCapacities(){
+    const caps = [];
+    for (let i=1;i<=115;i++){
+      const extra = Math.floor(i*28/115) - Math.floor((i-1)*28/115);
+      caps.push(44 + extra);
+    }
+    caps.push(42);
+    for (let i=1;i<=128;i++){
+      const extra = Math.floor(i*28/128) - Math.floor((i-1)*28/128);
+      caps.push(40 + extra);
+    }
+    caps.push(47);
+    return caps;
+  }
+
+  function buildDays(){
+    const out = [];
+    let d = new Date(START.y, START.m-1, START.d);
+    const end = new Date(END.y, END.m-1, END.d);
+    let written = 0;
+
+    while (d <= end){
+      const key = dateKey(d);
+      const dow = d.getDay();
+      let reason = '';
+      if (dow === 6) reason = 'Shabat · שבת';
+      if (specialNoWrite.has(key)) reason = specialNoWrite.get(key);
+
+      const writable = !reason;
+      const isShushan = key === '2027-03-24';
+      const rule = dayRules[dow];
+      let record = {
+        date:new Date(d.getFullYear(),d.getMonth(),d.getDate()), key, dow,
+        writable, reason, isShushan, rule,
+        lines: writable ? rule.lines : 0,
+        beforeLines:written,
+        afterLines:written,
+        colStart:null,colEnd:null,rowStart:null,rowEnd:null,capStart:null,capEnd:null,
+        accColumns: positionToColumnProgress(written),
+        accPercent: positionToColumnProgress(written)/TOTAL_COLUMNS*100
+      };
+
+      if (writable){
+        const startLine = written + 1;
+        const endLine = written + rule.lines;
+        const startPos = locateLine(startLine);
+        const endPos = locateLine(endLine);
+        record.colStart = startPos.col;
+        record.colEnd = endPos.col;
+        record.rowStart = startPos.row;
+        record.rowEnd = endPos.row;
+        record.capStart = startPos.cap;
+        record.capEnd = endPos.cap;
+        written = endLine;
+        record.afterLines = written;
+        record.accColumns = positionToColumnProgress(written);
+        record.accPercent = record.accColumns/TOTAL_COLUMNS*100;
+      }
+
+      out.push(record);
+      d = nextDate(d);
+    }
+
+    return out;
+  }
+
+  function locateLine(absLine){
+    let lo=0, hi=colEnds.length-1;
+    while (lo<hi){
+      const mid=(lo+hi)>>1;
+      if (absLine <= colEnds[mid]) hi=mid; else lo=mid+1;
+    }
+    const prev = lo===0 ? 0 : colEnds[lo-1];
+    return {col:lo+1,row:absLine-prev,cap:colCaps[lo]};
+  }
+
+  function positionToColumnProgress(linesWritten){
+    if (linesWritten <= 0) return 0;
+    if (linesWritten >= TOTAL_PLAN_LINES) return TOTAL_COLUMNS;
+    const p = locateLine(linesWritten);
+    return (p.col-1) + (p.row/p.cap);
+  }
+
+  function renderCalendar(records){
+    const root = document.getElementById('calendar');
+    const groups = new Map();
+    records.forEach(r => {
+      const key = `${r.date.getFullYear()}-${String(r.date.getMonth()+1).padStart(2,'0')}`;
+      if (!groups.has(key)) groups.set(key, []);
+      groups.get(key).push(r);
+    });
+
+    groups.forEach(monthDays => {
+      const y = monthDays[0].date.getFullYear();
+      const m = monthDays[0].date.getMonth();
+      const writable = monthDays.filter(x => x.writable);
+      const first = writable[0];
+      const last = writable[writable.length-1];
+      const monthCol = first && last ? `Col ${first.colStart}-${last.colEnd}` : 'Sin escritura';
+
+      const section = document.createElement('section');
+      section.className = 'month';
+      section.innerHTML = `
+        <div class="month-head">
+          <div class="month-title">${monthNames[m]} ${y}</div>
+          <div class="month-meta">${monthCol} &nbsp;|&nbsp; R X-42 + 1-Y &nbsp;|&nbsp; Hoy &nbsp;|&nbsp; Acumulado /245 &nbsp;|&nbsp; Hecho</div>
+        </div>
+        <div class="table-head">
+          <div>Hecho</div><div>Fecha</div><div>Col</div><div>Renglones</div><div>Hoy</div><div>Acumulado /245</div>
+        </div>`;
+
+      monthDays.forEach(day => section.appendChild(renderDay(day)));
+      root.appendChild(section);
+    });
+  }
+
+  function renderDay(day){
+    const row = document.createElement('div');
+    row.className = `day-row${day.writable?'':' no-write'}${day.isShushan?' shushan':''}`;
+    row.dataset.key = day.key;
+
+    const checkCell = document.createElement('div');
+    checkCell.className='check-cell';
+    const check = document.createElement('input');
+    check.type='checkbox';
+    check.className='done-check';
+    check.disabled=!day.writable;
+    check.setAttribute('aria-label', `Hecho ${formatDate(day.date)}`);
+    check.addEventListener('change', () => {
+      localStorage.setItem(STORAGE_PREFIX + day.key, check.checked ? '1' : '0');
+      row.classList.toggle('done', check.checked);
+      updateProgress();
+    });
+    checkCell.appendChild(check);
+
+    const dateCell = document.createElement('div');
+    dateCell.className='date-cell';
+    dateCell.innerHTML = `${dayRules[day.dow].name} ${day.date.getDate()} ${monthShort[day.date.getMonth()]}${day.isShushan?'<span class="subnote">Shushan Purim · שושן פורים · SÍ SE TRABAJA</span>':''}${day.key==='2027-08-18'?'<span class="sium-badge">SIUM · סיום</span>':''}`;
+
+    const colCell = document.createElement('div');
+    colCell.className='col-cell';
+    const rCell = document.createElement('div');
+    rCell.className='r-cell';
+    const todayCell = document.createElement('div');
+    todayCell.className='today-cell';
+    const accCell = document.createElement('div');
+    accCell.className='acc-cell';
+
+    if (day.writable){
+      colCell.textContent = day.colStart===day.colEnd ? `Col ${day.colStart}` : `Col ${day.colStart}-${day.colEnd}`;
+      rCell.textContent = formatRows(day);
+      todayCell.textContent = `Hoy ${day.lines} reng`;
+      accCell.textContent = `${fmt1(day.accColumns)}/245 · ${fmt1(day.accPercent)}%`;
+      todayCell.title = `${day.rule.start}-${day.rule.end}`;
+    } else {
+      colCell.innerHTML = '<span class="no-write-label">NO SE ESCRIBE</span>';
+      rCell.textContent = day.reason;
+      todayCell.textContent = '—';
+      accCell.textContent = `${fmt1(day.accColumns)}/245`;
+    }
+
+    row.append(checkCell,dateCell,colCell,rCell,todayCell,accCell);
+    return row;
+  }
+
+  function formatRows(day){
+    if (day.colStart === day.colEnd) return `R ${day.rowStart}-${day.rowEnd}`;
+    return `R ${day.rowStart}-${day.capStart} + 1-${day.rowEnd}`;
+  }
+
+  function restoreChecks(){
+    document.querySelectorAll('.day-row').forEach(row => {
+      const check = row.querySelector('.done-check');
+      if (!check || check.disabled) return;
+      const on = localStorage.getItem(STORAGE_PREFIX + row.dataset.key) === '1';
+      check.checked = on;
+      row.classList.toggle('done', on);
+    });
+  }
+
+  function updateProgress(){
+    let completedLines = 0;
+    activeDays.forEach(day => {
+      if (localStorage.getItem(STORAGE_PREFIX + day.key) === '1') completedLines += day.lines;
+    });
+    const pct = Math.min(100, completedLines / TOTAL_PLAN_LINES * 100);
+    const cols = Math.min(TOTAL_COLUMNS, completedLines / TOTAL_PLAN_LINES * TOTAL_COLUMNS);
+    document.getElementById('progressBar').style.width = pct + '%';
+    document.getElementById('progressText').textContent = `Llevas ${fmt1(cols)} de 245 columnas - ${fmt1(pct)}%`;
+  }
+
+  function downloadICS(){
+    const lines = [
+      'BEGIN:VCALENDAR',
+      'VERSION:2.0',
+      'PRODID:-//Sefer Torah 245//Calendario de Escritura//ES',
+      'CALSCALE:GREGORIAN',
+      'METHOD:PUBLISH',
+      'X-WR-CALNAME:Sefer Torah 245 - Escritura',
+      'X-WR-TIMEZONE:America/Mexico_City',
+      'BEGIN:VTIMEZONE',
+      'TZID:America/Mexico_City',
+      'X-LIC-LOCATION:America/Mexico_City',
+      'BEGIN:STANDARD',
+      'TZOFFSETFROM:-0600',
+      'TZOFFSETTO:-0600',
+      'TZNAME:CST',
+      'DTSTART:19700101T000000',
+      'END:STANDARD',
+      'END:VTIMEZONE'
+    ];
+
+    activeDays.forEach(day => {
+      const ymd = compactDate(day.date);
+      const start = day.rule.start.replace(':','') + '00';
+      const end = day.rule.end.replace(':','') + '00';
+      const cols = day.colStart===day.colEnd ? `Col ${day.colStart}` : `Col ${day.colStart}-${day.colEnd}`;
+      const rows = formatRows(day);
+      const special = day.isShushan ? ' · Shushan Purim' : (day.key==='2027-08-18' ? ' · SIUM' : '');
+      lines.push(
+        'BEGIN:VEVENT',
+        `UID:sefertorah245-${day.key}@local`,
+        `DTSTAMP:20260915T210000Z`,
+        `DTSTART;TZID=America/Mexico_City:${ymd}T${start}`,
+        `DTEND;TZID=America/Mexico_City:${ymd}T${end}`,
+        `SUMMARY:${icsEscape(`Sefer Torah 245 · ${cols} · ${day.lines} renglones${special}`)}`,
+        `DESCRIPTION:${icsEscape(`${rows} | Hoy ${day.lines} renglones | Acumulado ${fmt1(day.accColumns)}/245 | Ketivat Sefer Torah`)}`,
+        'STATUS:CONFIRMED',
+        'TRANSP:OPAQUE',
+        'END:VEVENT'
+      );
+    });
+
+    lines.push('END:VCALENDAR');
+    const blob = new Blob([lines.join('\r\n')], {type:'text/calendar;charset=utf-8'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'Sefer_Torah_245_Calendario_iPhone.ics';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1500);
+  }
+
+  function icsEscape(s){
+    return String(s).replace(/\\/g,'\\\\').replace(/\n/g,'\\n').replace(/,/g,'\\,').replace(/;/g,'\\;');
+  }
+
+  function formatDate(d){
+    return `${dayRules[d.getDay()].name} ${d.getDate()} ${monthShort[d.getMonth()]} ${d.getFullYear()}`;
+  }
+
+  function compactDate(d){
+    return `${d.getFullYear()}${String(d.getMonth()+1).padStart(2,'0')}${String(d.getDate()).padStart(2,'0')}`;
+  }
+
+  function dateKey(d){
+    return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+  }
+
+  function parseKey(key){
+    const [y,m,d] = key.split('-').map(Number);
+    return new Date(y,m-1,d);
+  }
+
+  function nextDate(d){
+    return new Date(d.getFullYear(),d.getMonth(),d.getDate()+1);
+  }
+
+  function fmt1(n){
+    const rounded = Math.round(n*10)/10;
+    return Number.isInteger(rounded) ? String(rounded) : rounded.toFixed(1);
+  }
+})();
+</script>
+</body>
+</html>
