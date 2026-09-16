@@ -1,7 +1,7 @@
 
 // Registro guiado de Veset Haguf: opciones estandarizadas + personalizado.
-// Permite agregar el Veset Haguf retrospectivamente después de registrar una Reiyá:
-// en la misma oná de la Reiyá o en la oná inmediatamente anterior.
+// Tras una Reiyá permite: eliminar la Reiyá y agregar/modificar/eliminar Veset Haguf
+// en la misma oná o en la oná inmediatamente anterior.
 (function vesetHagufPresets(){
  const PRESETS=['Cólicos Menstruales','Cuerpo Cortado','Estornudos Inusuales','Dolor de Cabeza Inusual'];
  const originalShowTextEntry=showTextEntry;
@@ -17,51 +17,31 @@
   const d=new Date(date+'T12:00:00');d.setDate(d.getDate()-1);return {date:localISO(d),ona:'yom'};
  }
  function reiyaAllowingHaguf(date,ona){
-  return state.events.find(e=>{
-   if(e.type!=='reiya')return false;
-   if(e.date===date&&e.ona===ona)return true;
-   const prev=previousOna(e.date,e.ona);return prev.date===date&&prev.ona===ona;
-  })||null;
+  return state.events.find(e=>{if(e.type!=='reiya')return false;if(e.date===date&&e.ona===ona)return true;const prev=previousOna(e.date,e.ona);return prev.date===date&&prev.ona===ona;})||null;
  }
  function openHagufOnReiya(date,ona,reiya){
-  selected={date,ona};
-  const d=new Date(date+'T12:00:00');
+  selected={date,ona};const d=new Date(date+'T12:00:00');
   document.getElementById('selTitle').textContent=d.toLocaleDateString('es-MX',{weekday:'long',day:'numeric',month:'long'})+' · '+(ona==='yom'?'Onat Yom':'Onat Laila');
   document.getElementById('selSub').textContent=heb(d);
   const c=document.getElementById('choices');c.style.display='block';c.innerHTML='';
-  addEditableRecords(c,date,ona);
   const existing=state.events.find(e=>e.type==='symptom'&&e.date===date&&e.ona===ona);
-  const info=document.createElement('div');info.className='locked';
   const same=reiya.date===date&&reiya.ona===ona;
-  info.innerHTML='<b>🔴 Reiyá registrada</b><br>'+(same?'Puedes agregar el Veset Haguf que ocurrió en esta misma oná.':'Esta es la oná inmediatamente anterior a la Reiyá. Puedes agregar aquí el Veset Haguf si el síntoma ocurrió en esta oná.');c.appendChild(info);
-  if(!existing){const b=document.createElement('button');b.className='choice';b.style.marginTop='12px';b.textContent='🧠 Agregar Síntoma / Veset Haguf';b.onclick=()=>showTextEntry('symptom');c.appendChild(b);}
+  const info=document.createElement('div');info.className='locked';info.innerHTML='<b>🔴 Reiyá registrada</b><br>'+(same?'Puedes administrar la Reiyá y el Veset Haguf de esta misma oná.':'Esta es la oná inmediatamente anterior a la Reiyá. Puedes registrar o administrar aquí el Veset Haguf.');c.appendChild(info);
+  if(same){const delR=document.createElement('button');delR.className='danger';delR.style.marginTop='10px';delR.textContent='Eliminar / cancelar esta Reiyá';delR.onclick=()=>removeReiya(reiya);c.appendChild(delR);}
+  if(existing){
+   const card=document.createElement('div');card.className='recordCard';card.style.cssText='margin-top:12px;grid-column:1 / -1';const raw=existing.symptom||existing.label.replace(/^Síntoma:\s*/,'');card.innerHTML='<b>🧠 Síntoma / Veset Haguf</b><div>'+escapeHtml(raw)+'</div>';
+   const actions=document.createElement('div');actions.className='recordActions';const edit=document.createElement('button');edit.className='miniBtn';edit.textContent='Modificar';edit.onclick=()=>showTextEntry('symptom',existing);const del=document.createElement('button');del.className='miniDanger';del.textContent='Eliminar';del.onclick=()=>removeEvent(existing);actions.appendChild(edit);actions.appendChild(del);card.appendChild(actions);c.appendChild(card);
+  }else{const b=document.createElement('button');b.className='choice';b.style.marginTop='12px';b.textContent='🧠 Agregar Síntoma / Veset Haguf';b.onclick=()=>showTextEntry('symptom');c.appendChild(b);}
   document.getElementById('modal').style.display='flex';
  }
- openSheet=function(d,o){
-  const date=localISO(d),r=reiyaAllowingHaguf(date,o);
-  // Si la celda está bloqueada por una Reiyá, o es exactamente la oná anterior,
-  // abrir una vista segura que sólo permite consultar/modificar Veset Haguf.
-  if(r){openHagufOnReiya(date,o,r);return;}
-  return originalOpenSheet(d,o);
- };
+ openSheet=function(d,o){const date=localISO(d),r=reiyaAllowingHaguf(date,o);if(r){openHagufOnReiya(date,o,r);return;}return originalOpenSheet(d,o);};
  showTextEntry=function(type,existing=null){
   if(type!=='symptom')return originalShowTextEntry(type,existing);
-  const c=document.getElementById('choices');c.style.display='block';c.innerHTML='';
-  const form=document.createElement('div');form.className='entryForm hagufEntry';
-  form.innerHTML='<label style="display:block;margin-bottom:10px"><b>🧠 Síntoma / Veset Haguf</b></label><div class="hagufOptions"></div><div id="hagufCustom" style="display:none;margin-top:12px"><label for="hagufText">Personalizado</label><textarea id="hagufText" placeholder="Escribe el síntoma exactamente como quieres registrarlo"></textarea><div class="notice" style="margin-top:8px"><b>Importante:</b> Para que Luaj Tahará pueda detectar un posible Veset Haguf, escribe siempre este síntoma con las <b>mismas palabras</b> cada vez que lo registres.</div></div><div class="entryActions" style="margin-top:14px"><button class="secondary" id="hagufBack" type="button">Volver</button><button class="btn" id="hagufSave" type="button" style="display:none">'+(existing?'Guardar cambios':'Confirmar')+'</button></div>';
-  c.appendChild(form);
-  const opts=form.querySelector('.hagufOptions'),custom=form.querySelector('#hagufCustom'),ta=form.querySelector('#hagufText'),saveBtn=form.querySelector('#hagufSave');
-  const current=existing?String(existing.symptom||existing.label.replace(/^Síntoma:\s*/,'')) : '';
-  [...PRESETS,'Personalizado'].forEach(name=>{
-   const b=document.createElement('button');b.type='button';b.className='choice';b.style.cssText='display:block;width:100%;margin:7px 0;text-align:left';b.textContent=name;
-   b.onclick=()=>{
-    opts.querySelectorAll('button').forEach(x=>x.classList.remove('selected'));b.classList.add('selected');
-    if(name==='Personalizado'){custom.style.display='block';saveBtn.style.display='inline-block';if(!PRESETS.includes(current))ta.value=current;setTimeout(()=>ta.focus(),0);}
-    else{custom.style.display='none';saveBtn.style.display='none';saveSymptom(name,existing);}
-   };opts.appendChild(b);
-  });
+  const c=document.getElementById('choices');c.style.display='block';c.innerHTML='';const form=document.createElement('div');form.className='entryForm hagufEntry';
+  form.innerHTML='<label style="display:block;margin-bottom:10px"><b>🧠 Síntoma / Veset Haguf</b></label><div class="hagufOptions"></div><div id="hagufCustom" style="display:none;margin-top:12px"><label for="hagufText">Personalizado</label><textarea id="hagufText" placeholder="Escribe el síntoma exactamente como quieres registrarlo"></textarea><div class="notice" style="margin-top:8px"><b>Importante:</b> Para que Luaj Tahará pueda detectar un posible Veset Haguf, escribe siempre este síntoma con las <b>mismas palabras</b> cada vez que lo registres.</div></div><div class="entryActions" style="margin-top:14px"><button class="secondary" id="hagufBack" type="button">Volver</button><button class="btn" id="hagufSave" type="button" style="display:none">'+(existing?'Guardar cambios':'Confirmar')+'</button></div>';c.appendChild(form);
+  const opts=form.querySelector('.hagufOptions'),custom=form.querySelector('#hagufCustom'),ta=form.querySelector('#hagufText'),saveBtn=form.querySelector('#hagufSave');const current=existing?String(existing.symptom||existing.label.replace(/^Síntoma:\s*/,'')):'';
+  [...PRESETS,'Personalizado'].forEach(name=>{const b=document.createElement('button');b.type='button';b.className='choice';b.style.cssText='display:block;width:100%;margin:7px 0;text-align:left';b.textContent=name;b.onclick=()=>{opts.querySelectorAll('button').forEach(x=>x.classList.remove('selected'));b.classList.add('selected');if(name==='Personalizado'){custom.style.display='block';saveBtn.style.display='inline-block';if(!PRESETS.includes(current))ta.value=current;setTimeout(()=>ta.focus(),0);}else{custom.style.display='none';saveBtn.style.display='none';saveSymptom(name,existing);}};opts.appendChild(b);});
   if(current){const preset=[...opts.querySelectorAll('button')].find(b=>b.textContent===current);if(preset)preset.classList.add('selected');else{const p=[...opts.querySelectorAll('button')].find(b=>b.textContent==='Personalizado');if(p)p.classList.add('selected');custom.style.display='block';saveBtn.style.display='inline-block';ta.value=current;}}
-  form.querySelector('#hagufBack').onclick=()=>{let d=new Date(selected.date+'T12:00:00');openSheet(d,selected.ona)};
-  saveBtn.onclick=()=>{const txt=ta.value.trim();if(!txt){ta.focus();ta.style.borderColor='#b3261e';return;}saveSymptom(txt,existing)};
+  form.querySelector('#hagufBack').onclick=()=>{let d=new Date(selected.date+'T12:00:00');openSheet(d,selected.ona)};saveBtn.onclick=()=>{const txt=ta.value.trim();if(!txt){ta.focus();ta.style.borderColor='#b3261e';return;}saveSymptom(txt,existing)};
  };
 })();
