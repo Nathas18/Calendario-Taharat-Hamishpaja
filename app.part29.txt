@@ -1,0 +1,60 @@
+
+// Reglas aprobadas: Kavua Bedilug de Haflaga y no reutilizacion de la Reiya que cierra un Kavua previo.
+// Capa aislada sobre possiblePatterns: no modifica historial, Supabase ni app.part21.
+(function approvedKavuaDilugRules(){
+ const previousPossiblePatterns=possiblePatterns;
+ function reiyot(){return state.events.filter(e=>e.type==='reiya').sort((a,b)=>a.date.localeCompare(b.date)||a.ona.localeCompare(b.ona));}
+ function hafIntervals(arr){const z=[];for(let i=1;i<arr.length;i++)z.push(1+dayDiff(arr[i-1].date,arr[i].date));return z;}
+ function sameValues(a,b){return a.length===b.length&&a.every((v,i)=>v===b[i]);}
+ function nextByInterval(last,n){if(!(n>0))return null;const d=atNoon(last.date);d.setDate(d.getDate()+n-1);return localISO(d);}
+ function fixedStepHaflaga(re){
+  // Tres haflagot cuyas DIFERENCIAS son iguales: ej. 28,29,30 => +1,+1; 28,30,32 => +2,+2.
+  if(re.length<4)return null;const x=re.slice(-4);if(!sameOna(x))return null;const ints=hafIntervals(x),steps=[ints[1]-ints[0],ints[2]-ints[1]];
+  if(steps[0]===0||steps[0]!==steps[1])return null;const next=ints[2]+steps[1];if(next<=0)return null;
+  return {type:'haflaga-dilug-'+(steps[1]>0?'kadima':'lemafre'),title:'Posible Veset Haflagá Bedilug '+(steps[1]>0?'Kadima':'Lemafreá'),detail:'Tres haflagot consecutivas forman el mismo salto: '+ints.join(' → ')+' (salto '+(steps[1]>0?'+':'')+steps[1]+' repetido). Próxima haflagá proyectada: '+next+' días.',projection:nextByInterval(x[3],next),ona:x[3].ona,interval:next,delta:steps[1],approvedRule:'haflaga-fixed-step'};
+ }
+ function repeatedStaircaseHaflaga(re){
+  // Una escalera de saltos variables NO kovea con una sola escena. La escena completa debe repetirse 3 veces.
+  // Detecta cualquier bloque de >=3 haflagot repetido exactamente tres veces y proyecta su siguiente valor.
+  if(re.length<10)return null;
+  for(let block=3;block<=Math.floor((re.length-1)/3);block++){
+   const need=block*3+1,x=re.slice(-need);if(!sameOna(x))continue;const ints=hafIntervals(x),a=ints.slice(0,block),b=ints.slice(block,block*2),c=ints.slice(block*2,block*3);
+   if(!sameValues(a,b)||!sameValues(a,c))continue;
+   const diffs=a.slice(1).map((v,i)=>v-a[i]);if(!diffs.length||diffs.every(v=>v===diffs[0]))continue; // lo fijo ya pertenece a la regla simple
+   const next=a[0];
+   return {type:'haflaga-dilug-sequence',title:'Posible Veset Haflagá Bedilug · Secuencia repetida',detail:'La secuencia completa de haflagot '+a.join(' → ')+' se repitió 3 veces en la misma oná. Próxima haflagá proyectada: '+next+' días, reiniciando la misma secuencia.',projection:nextByInterval(x[x.length-1],next),ona:x[x.length-1].ona,interval:next,sequence:a,approvedRule:'haflaga-sequence-x3'};
+  }
+  return null;
+ }
+ function protectedJodeshDilug(re,patterns){
+  // Si una Reiya completa un Kavua fijo, esa misma Reiya no puede ser el inicio de un nuevo Kavua competidor.
+  // Ej. 11,11,11,12,13: NO aceptar 11,12,13. Al llegar 14, 12,13,14 sí puede formar el nuevo patrón.
+  if(re.length<5)return patterns;
+  const last5=re.slice(-5),hp=last5.map(r=>hebParts(atNoon(r.date)));
+  if(!hp.every(Boolean)||!sameOna(last5)||!consecutiveHebMonths(last5.slice(0,3)))return patterns;
+  if(!(hp[0].day===hp[1].day&&hp[1].day===hp[2].day))return patterns;
+  const closingId=last5[2].id,closingDate=last5[2].date;
+  return patterns.filter(p=>{
+   if(!p.type.startsWith('jodesh-dilug'))return true;
+   // Con solo dos Reiyot posteriores al cierre, cualquier dilug de 3 que use la tercera fija queda bloqueado.
+   if(re.length>=5&&re[re.length-3]&&(re[re.length-3].id===closingId||re[re.length-3].date===closingDate))return false;
+   return true;
+  });
+ }
+ possiblePatterns=function(){
+  const re=reiyot();
+  let out=previousPossiblePatterns();
+  // Sustituye solamente detectores Haflaga Bedilug; conserva Haflaga fija y las demás reglas existentes.
+  out=out.filter(p=>!p.type.startsWith('haflaga-dilug-'));
+  const repeated=repeatedStaircaseHaflaga(re),fixed=fixedStepHaflaga(re);
+  if(repeated)out.push(repeated);else if(fixed)out.push(fixed);
+  out=protectedJodeshDilug(re,out);
+  return out;
+ };
+ const previousActive=activeKavuaPatterns;
+ activeKavuaPatterns=function(){
+  const ps=possiblePatterns();
+  return ps.filter(p=>p.projection&&(['hashavua','haflaga-kavua','haflaga-dilug-kadima','haflaga-dilug-lemafre','haflaga-dilug-sequence'].includes(p.type)||p.type.startsWith('jodesh-')));
+ };
+ setTimeout(()=>{try{render()}catch(e){console.error('Kavua approved rules',e)}},100);
+})();
