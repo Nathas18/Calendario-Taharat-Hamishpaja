@@ -1,20 +1,20 @@
 
 // Sidur Edot HaMizrach. Modulo de lectura aislado: no modifica reglas, eventos ni Supabase.
 (function sidurModule(){
- const SIDUR_CACHE='luaj-sidur-text-v1';
+ const SIDUR_CACHE='luaj-sidur-text-v2';
  const sections=[
-  {id:'birkot',he:'ברכות השחר',ref:'Siddur Edot HaMizrach, Preparatory Prayers, Morning Blessings'},
-  {id:'shacharit',he:'שחרית',ref:'Siddur Edot HaMizrach, Weekday Shacharit'},
-  {id:'mincha',he:'מנחה',ref:'Siddur Edot HaMizrach, Weekday Mincha'},
-  {id:'arvit',he:'ערבית',ref:'Siddur Edot HaMizrach, Weekday Arvit'},
-  {id:'hamazon',he:'ברכת המזון',ref:'Siddur Edot HaMizrach, Post Meal Blessing'},
-  {id:'meein',he:'ברכת מעין שלוש',ref:'Siddur Edot HaMizrach, Al Hamihya'},
-  {id:'nefashot',he:'בורא נפשות',ref:'Siddur Edot HaMizrach, Blessings on Enjoyments 13'},
-  {id:'asher',he:'אשר יצר',ref:'Siddur Edot HaMizrach, Preparatory Prayers, Morning Blessings 6'},
-  {id:'derech',he:'תפילת הדרך',ref:"Siddur Edot HaMizrach, Assorted Blessings and Prayers, Traveler's Prayer"},
-  {id:'levana',he:'ברכת הלבנה',ref:'Siddur Edot HaMizrach, Blessing of the Moon'},
-  {id:'hamapil',he:'קריאת שמע שעל המיטה / המפיל',ref:'Siddur Edot HaMizrach, Bedtime Shema'},
-  {id:'sheva',he:'שבע ברכות',ref:'Siddur Edot HaMizrach, Assorted Blessings and Prayers, Sheva Berachot'}
+  {id:'birkot',he:'ברכות השחר',refs:['Siddur Edot HaMizrach, Preparatory Prayers, Morning Blessings','Siddur Edot HaMizrach, Preparatory Prayers, Torah Blessings']},
+  {id:'shacharit',he:'שחרית',refs:['Siddur Edot HaMizrach, Weekday Shacharit']},
+  {id:'mincha',he:'מנחה',refs:['Siddur Edot HaMizrach, Weekday Mincha']},
+  {id:'arvit',he:'ערבית',refs:['Siddur Edot HaMizrach, Weekday Arvit']},
+  {id:'hamazon',he:'ברכת המזון',refs:['Siddur Edot HaMizrach, Post Meal Blessing']},
+  {id:'meein',he:'ברכת מעין שלוש',refs:['Siddur Edot HaMizrach, Al Hamihya']},
+  {id:'nefashot',he:'בורא נפשות',refs:['Siddur Edot HaMizrach, Blessings on Enjoyments'] ,match:'בורא נפשות'},
+  {id:'asher',he:'אשר יצר',refs:['Siddur Edot HaMizrach, Preparatory Prayers, Morning Blessings'],match:'אשר יצר'},
+  {id:'derech',he:'תפילת הדרך',refs:["Siddur Edot HaMizrach, Assorted Blessings and Prayers, Traveler's Prayer","Siddur Edot HaMizrach, Various Blessings and Prayers, Travelers Prayer"]},
+  {id:'levana',he:'ברכת הלבנה',refs:['Siddur Edot HaMizrach, Blessing of the Moon']},
+  {id:'hamapil',he:'קריאת שמע שעל המיטה / המפיל',refs:['Siddur Edot HaMizrach, Bedtime Shema']},
+  {id:'sheva',he:'שבע ברכות',refs:['Siddur Edot HaMizrach, Assorted Blessings and Prayers, Order of Seven Blessings','Siddur Edot HaMizrach, Various Blessings and Prayers, Order of Seven Blessings']}
  ];
  function init(){
   const bar=document.getElementById('userBar'),logout=document.getElementById('logoutBtn'),email=document.getElementById('userEmail'),main=document.getElementById('appMain'),auth=document.getElementById('authWrap');
@@ -33,11 +33,11 @@
   function showHome(){reader.classList.remove('show');home.style.display='block';modal.querySelector('.sidurBack').textContent='‹ Volver'}
   function flatten(v,out=[]){if(Array.isArray(v))v.forEach(x=>flatten(x,out));else if(typeof v==='string'&&v.trim())out.push(v.trim());return out}
   function esc(s){return s.replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
-  async function getSidurResponse(url){
-   if('caches' in window){const cache=await caches.open(SIDUR_CACHE),saved=await cache.match(url);if(!navigator.onLine&&saved)return saved.clone();try{const fresh=await fetch(url);if(fresh.ok)await cache.put(url,fresh.clone());return fresh}catch(e){if(saved)return saved.clone();throw e}}
-   return fetch(url)
-  }
-  async function loadSection(s){home.style.display='none';reader.classList.add('show');title.textContent=s.he;text.innerHTML='<div class="sidurLoading">טוען...</div>';modal.querySelector('.sidurBack').textContent='‹ סידור';try{const url='https://www.sefaria.org/api/v3/texts/'+encodeURIComponent(s.ref)+'?version=source&fill_in_missing_segments=1&return_format=text_only';const r=await getSidurResponse(url);if(!r.ok)throw new Error('HTTP '+r.status);const d=await r.json(),v=d.versions&&d.versions[0],parts=flatten(v&&v.text);if(!parts.length)throw new Error('empty');text.innerHTML=parts.map(x=>'<p>'+esc(x)+'</p>').join('')}catch(e){console.error('Sidur:',s.id,e);text.innerHTML='<div class="sidurError">לא ניתן לטעון את התפילה כרגע.<br><small>Conéctate a internet una vez para guardar esta sección en el dispositivo.</small></div>'}}
+  function apiUrl(ref){return 'https://www.sefaria.org/api/v3/texts/'+encodeURIComponent(ref)+'?version=source&fill_in_missing_segments=1&return_format=text_only'}
+  async function getSidurResponse(url){if('caches' in window){const cache=await caches.open(SIDUR_CACHE),saved=await cache.match(url);if(!navigator.onLine&&saved)return saved.clone();try{const fresh=await fetch(url);if(fresh.ok)await cache.put(url,fresh.clone());return fresh}catch(e){if(saved)return saved.clone();throw e}}return fetch(url)}
+  async function fetchRef(ref){const r=await getSidurResponse(apiUrl(ref));if(!r.ok)throw new Error('HTTP '+r.status);const d=await r.json(),v=d.versions&&d.versions[0],parts=flatten(v&&v.text);if(!parts.length)throw new Error('empty');return parts}
+  function selectMatched(parts,match){if(!match)return parts;const i=parts.findIndex(x=>x.includes(match));if(i<0)return parts;return parts.slice(i,Math.min(parts.length,i+4))}
+  async function loadSection(s){home.style.display='none';reader.classList.add('show');title.textContent=s.he;text.innerHTML='<div class="sidurLoading">טוען...</div>';modal.querySelector('.sidurBack').textContent='‹ סידור';try{let all=[];for(const ref of s.refs){try{const parts=await fetchRef(ref);all.push(...selectMatched(parts,s.match));if(s.match&&all.some(x=>x.includes(s.match)))break}catch(e){console.warn('Sidur ref:',ref,e)}}if(!all.length)throw new Error('empty section');text.innerHTML=all.map(x=>'<p>'+esc(x)+'</p>').join('')}catch(e){console.error('Sidur:',s.id,e);text.innerHTML='<div class="sidurError">לא ניתן לטעון את התפילה כרגע.<br><small>Conéctate a internet una vez para guardar esta sección en el dispositivo.</small></div>'}}
   btn.onclick=open;modal.querySelector('.sidurBack').onclick=()=>reader.classList.contains('show')?showHome():close();modal.querySelectorAll('[data-sidur]').forEach(x=>x.onclick=()=>loadSection(sections.find(s=>s.id===x.dataset.sidur)));modal.querySelectorAll('.sidurFont').forEach(x=>x.onclick=()=>{font=Math.max(17,Math.min(32,font+Number(x.dataset.delta)*2));text.style.fontSize=font+'px'});document.addEventListener('keydown',e=>{if(e.key==='Escape'&&modal.classList.contains('show'))reader.classList.contains('show')?showHome():close()});
   sync();const ob=new MutationObserver(sync);ob.observe(main,{attributes:true,attributeFilter:['style','class']});if(auth)ob.observe(auth,{attributes:true,attributeFilter:['style','class']});
  }
