@@ -1,7 +1,7 @@
-const CACHE='luaj-tahara-pwa-v21';
+const CACHE='luaj-tahara-pwa-v22';
 const CORE=[
   './','./index.html','./manifest.webmanifest','./style.css','./theme-overrides.css','./app.js','./pwa-install.js','./icon.svg','./icon-maskable.svg',
-  ...Array.from({length:26},(_,i)=>`./app.part${i+1}.txt`)
+  ...Array.from({length:27},(_,i)=>`./app.part${i+1}.txt`)
 ];
 self.addEventListener('install',event=>{event.waitUntil(caches.open(CACHE).then(cache=>cache.addAll(CORE)).then(()=>self.skipWaiting()));});
 self.addEventListener('activate',event=>{event.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(key=>key!==CACHE).map(key=>caches.delete(key)))).then(()=>self.clients.claim()));});
