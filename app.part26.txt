@@ -1,0 +1,39 @@
+
+// Veset Kavúa HaJódesh cada dos meses hebreos.
+// Regla aprobada: 3 Reiyot en el mismo día hebreo y misma oná, separadas exactamente por un mes hebreo intermedio.
+(function bimonthlyJodeshKavua(){
+ const TYPE='jodesh-kavua-bimonthly';
+ const basePossible=possiblePatterns,baseActive=activeKavuaPatterns;
+ function reiyot(){return state.events.filter(e=>e.type==='reiya').sort((a,b)=>a.date.localeCompare(b.date)||a.ona.localeCompare(b.ona))}
+ function monthStartIso(iso){return localISO(hebMonthStart(atNoon(iso)))}
+ function addHebMonthsStart(iso,count){let s=hebMonthStart(atNoon(iso));for(let i=0;i<count;i++)s=nextHebMonthStart(s);return s}
+ function monthsApart(a,b,count){return localISO(addHebMonthsStart(a,count))===monthStartIso(b)}
+ function targetAfterMonths(iso,targetDay,count){let s=addHebMonthsStart(iso,count),after=nextHebMonthStart(s),days=Math.round((after-s)/86400000);if(targetDay<1||targetDay>days)return null;let q=new Date(s);q.setDate(q.getDate()+targetDay-1);return localISO(q)}
+ function establishments(){
+  const groups=new Map();
+  for(const r of reiyot()){const h=hebParts(atNoon(r.date));if(!h)continue;const k=h.day+'|'+r.ona;if(!groups.has(k))groups.set(k,[]);groups.get(k).push(r)}
+  const found=[];
+  for(const arr of groups.values())for(let i=2;i<arr.length;i++){
+    const x=arr.slice(i-2,i+1),h=x.map(r=>hebParts(atNoon(r.date)));
+    if(h.every(Boolean)&&h[0].day===h[1].day&&h[1].day===h[2].day&&sameOna(x)&&monthsApart(x[0].date,x[1].date,2)&&monthsApart(x[1].date,x[2].date,2))found.push({type:TYPE,kind:'jodesh-bimonthly',ona:x[2].ona,targetDay:h[2].day,establishedAt:x[2].date,sourceDates:x.map(r=>r.date)});
+  }
+  return found.sort((a,b)=>a.establishedAt.localeCompare(b.establishedAt));
+ }
+ function stateFor(p){
+  let anchor=p.establishedAt,misses=0,lastNo=null;
+  for(let guard=0;guard<60;guard++){
+    const expected=targetAfterMonths(anchor,p.targetDay,2);if(!expected)break;
+    const yes=state.events.find(e=>e.type==='reiya'&&e.date===expected&&e.ona===p.ona);
+    if(yes){anchor=yes.date;misses=0;continue}
+    const no=state.events.find(e=>e.type==='kavua_no'&&e.patternType===TYPE&&e.date===expected&&e.ona===p.ona);
+    if(no){misses++;anchor=no.date;lastNo=no;if(misses>=3)return {...p,status:'dormant',misses,dormantFrom:no.date};continue}
+    return {...p,status:'active',misses,projection:expected,pending:true,lastNo};
+  }
+  return {...p,status:'active',misses,projection:targetAfterMonths(anchor,p.targetDay,2),pending:true,lastNo};
+ }
+ function current(){const all=establishments();return all.length?stateFor(all[all.length-1]):null}
+ function toPattern(s){if(!s||s.status!=='active'||!s.projection)return null;let detail='Tres Reiyot fueron registradas el día hebreo '+s.targetDay+', en la misma oná, una vez cada dos meses hebreos. El mes intermedio no forma parte de la cadencia. Próxima revisión: nuevamente dos meses hebreos después.';if(s.misses)detail+=' Lleva '+s.misses+' ausencia'+(s.misses===1?'':'s')+' confirmada'+(s.misses===1?'':'s')+'; el Kavúa continúa hasta tres ausencias confirmadas.';detail+=' Al llegar la oná proyectada se debe confirmar expresamente SÍ/NO; el sistema nunca supone una ausencia.';return {...s,type:TYPE,title:'Posible Veset Kavúa HaJódesh BeDilug · cada 2 meses',detail,ona:s.ona,projection:s.projection,kavuaLifecycle:true,bimonthly:true}}
+ activeKavuaPatterns=function(){const existing=baseActive();if(existing&&existing.length)return existing;const p=toPattern(current());return p?[p]:[]};
+ possiblePatterns=function(){let out=basePossible().filter(p=>p.type!==TYPE),s=current(),p=toPattern(s);if(p)out.push(p);else if(s&&s.status==='dormant')out.push({type:TYPE,title:'Veset Kavúa HaJódesh BeDilug · cada 2 meses · dormido',detail:'Este patrón de una Reiyá cada dos meses hebreos alcanzó tres ausencias expresamente confirmadas.',projection:null,ona:s.ona,kavuaDormant:true,bimonthly:true});return out};
+ setTimeout(()=>render(),300);authListeners.push(()=>setTimeout(()=>render(),500));
+})();
