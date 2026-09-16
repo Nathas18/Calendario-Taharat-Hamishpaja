@@ -1,0 +1,38 @@
+
+// Zmanim visuales por localidad: Netz Hajama y Shekiat Hajama.
+// No modifica reglas halájicas ni eventos. Usa ubicación del dispositivo sólo para calcular horarios.
+(function zmanimByLocation(){
+ const previousOpenSheet=openSheet;
+ const ZKEY='luaj_zmanim_location_v1';
+ function rad(x){return x*Math.PI/180} function deg(x){return x*180/Math.PI}
+ function norm(x,m){return ((x%m)+m)%m}
+ function solarUTC(date,lat,lon,rise){
+  const N=Math.floor((Date.UTC(date.getFullYear(),date.getMonth(),date.getDate())-Date.UTC(date.getFullYear(),0,0))/86400000);
+  const lngHour=lon/15,t=N+(((rise?6:18)-lngHour)/24),M=(0.9856*t)-3.289;
+  let L=M+1.916*Math.sin(rad(M))+0.020*Math.sin(rad(2*M))+282.634;L=norm(L,360);
+  let RA=deg(Math.atan(0.91764*Math.tan(rad(L))));RA=norm(RA,360);RA+=(Math.floor(L/90)*90-Math.floor(RA/90)*90);RA/=15;
+  const sinDec=0.39782*Math.sin(rad(L)),cosDec=Math.cos(Math.asin(sinDec));
+  const cosH=(Math.cos(rad(90.833))-(sinDec*Math.sin(rad(lat))))/(cosDec*Math.cos(rad(lat)));if(cosH>1||cosH< -1)return null;
+  let H=rise?360-deg(Math.acos(cosH)):deg(Math.acos(cosH));H/=15;
+  const T=H+RA-(0.06571*t)-6.622;return norm(T-lngHour,24);
+ }
+ function localTime(date,utcHours){
+  if(utcHours==null)return 'No disponible';const ms=Date.UTC(date.getFullYear(),date.getMonth(),date.getDate())+utcHours*3600000;
+  return new Intl.DateTimeFormat('es-MX',{hour:'numeric',minute:'2-digit',hour12:true}).format(new Date(ms));
+ }
+ function storedLoc(){try{return JSON.parse(localStorage.getItem(ZKEY)||'null')}catch(e){return null}}
+ function saveLoc(x){try{localStorage.setItem(ZKEY,JSON.stringify(x))}catch(e){}}
+ function getLoc(){return new Promise(resolve=>{const old=storedLoc();if(old&&Number.isFinite(old.lat)&&Number.isFinite(old.lon))return resolve(old);if(!navigator.geolocation)return resolve(null);navigator.geolocation.getCurrentPosition(p=>{const x={lat:p.coords.latitude,lon:p.coords.longitude};saveLoc(x);resolve(x)},()=>resolve(null),{enableHighAccuracy:false,timeout:7000,maximumAge:86400000});});}
+ function hebrewCivilDate(date,ona){
+  // La fecha guardada por el calendario representa el día civil mostrado para Onat Yom.
+  // Para Onat Laila queremos el Netz que cierra esa noche y pertenece al mismo día hebreo,
+  // por lo que usamos exactamente el mismo día civil que su Onat Yom correspondiente.
+  return new Date(date.getFullYear(),date.getMonth(),date.getDate(),12,0,0);
+ }
+ function inject(date,ona){
+  const c=document.getElementById('choices');if(!c||c.querySelector('.zmanimBox'))return;
+  const box=document.createElement('div');box.className='zmanimBox';box.style.cssText='grid-column:1 / -1;margin:10px 0 14px;padding:11px 13px;border-radius:12px;background:rgba(31,143,133,.07);line-height:1.7';box.innerHTML='<div><b>Netz Hajama:</b> calculando…</div>'+(ona==='yom'?'<div><b>Shekiat Hajama:</b> calculando…</div>':'');c.insertBefore(box,c.firstChild);
+  getLoc().then(loc=>{if(!loc){box.innerHTML='<div><b>Netz Hajama:</b> activa la ubicación para calcularlo</div>'+(ona==='yom'?'<div><b>Shekiat Hajama:</b> activa la ubicación para calcularla</div>':'');return;}const zdate=hebrewCivilDate(date,ona),rise=solarUTC(zdate,loc.lat,loc.lon,true),set=solarUTC(zdate,loc.lat,loc.lon,false);box.innerHTML='<div><b>Netz Hajama:</b> '+localTime(zdate,rise)+'</div>'+(ona==='yom'?'<div><b>Shekiat Hajama:</b> '+localTime(zdate,set)+'</div>':'');});
+ }
+ openSheet=function(d,o){const result=previousOpenSheet(d,o);setTimeout(()=>inject(new Date(d.getFullYear(),d.getMonth(),d.getDate(),12,0,0),o),0);return result;};
+})();
