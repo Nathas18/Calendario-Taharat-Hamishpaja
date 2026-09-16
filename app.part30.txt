@@ -1,0 +1,37 @@
+
+// Registro guiado de Veset Haguf: opciones estandarizadas + personalizado.
+(function vesetHagufPresets(){
+ const PRESETS=['Cólicos Menstruales','Cuerpo Cortado','Estornudos Inusuales','Dolor de Cabeza Inusual'];
+ const originalShowTextEntry=showTextEntry;
+ function saveSymptom(txt,existing){
+  txt=String(txt||'').trim();if(!txt)return false;
+  if(existing){existing.label='Síntoma: '+txt;existing.symptom=txt;}
+  else state.events.push({...selected,type:'symptom',label:'Síntoma: '+txt,symptom:txt,id:(crypto.randomUUID?crypto.randomUUID():Date.now()+'-'+Math.random())});
+  save();document.getElementById('modal').style.display='none';render();return true;
+ }
+ showTextEntry=function(type,existing=null){
+  if(type!=='symptom')return originalShowTextEntry(type,existing);
+  const c=document.getElementById('choices');c.style.display='block';c.innerHTML='';
+  const form=document.createElement('div');form.className='entryForm hagufEntry';
+  form.innerHTML='<label style="display:block;margin-bottom:10px"><b>🧠 Síntoma / Veset Haguf</b></label><div class="hagufOptions"></div><div id="hagufCustom" style="display:none;margin-top:12px"><label for="hagufText">Personalizado</label><textarea id="hagufText" placeholder="Escribe el síntoma exactamente como quieres registrarlo"></textarea><div class="notice" style="margin-top:8px"><b>Importante:</b> Para que Luaj Tahará pueda detectar un posible Veset Haguf, escribe siempre este síntoma con las <b>mismas palabras</b> cada vez que lo registres.</div></div><div class="entryActions" style="margin-top:14px"><button class="secondary" id="hagufBack" type="button">Volver</button><button class="btn" id="hagufSave" type="button" style="display:none">'+(existing?'Guardar cambios':'Confirmar')+'</button></div>';
+  c.appendChild(form);
+  const opts=form.querySelector('.hagufOptions'),custom=form.querySelector('#hagufCustom'),ta=form.querySelector('#hagufText'),saveBtn=form.querySelector('#hagufSave');
+  const current=existing?String(existing.symptom||existing.label.replace(/^Síntoma:\s*/,'')) : '';
+  [...PRESETS,'Personalizado'].forEach(name=>{
+   const b=document.createElement('button');b.type='button';b.className='choice';b.style.cssText='display:block;width:100%;margin:7px 0;text-align:left';b.textContent=name;
+   b.onclick=()=>{
+    opts.querySelectorAll('button').forEach(x=>x.classList.remove('selected'));
+    b.classList.add('selected');
+    if(name==='Personalizado'){custom.style.display='block';saveBtn.style.display='inline-block';if(!PRESETS.includes(current))ta.value=current;setTimeout(()=>ta.focus(),0);}
+    else{custom.style.display='none';saveBtn.style.display='none';saveSymptom(name,existing);}
+   };opts.appendChild(b);
+  });
+  if(current){
+   const preset=[...opts.querySelectorAll('button')].find(b=>b.textContent===current);
+   if(preset)preset.classList.add('selected');
+   else{const p=[...opts.querySelectorAll('button')].find(b=>b.textContent==='Personalizado');if(p)p.classList.add('selected');custom.style.display='block';saveBtn.style.display='inline-block';ta.value=current;}
+  }
+  form.querySelector('#hagufBack').onclick=()=>{const d=new Date(selected.date+'T12:00:00');openSheet(d,selected.ona)};
+  saveBtn.onclick=()=>{const txt=ta.value.trim();if(!txt){ta.focus();ta.style.borderColor='#b3261e';return;}saveSymptom(txt,existing)};
+ };
+})();
