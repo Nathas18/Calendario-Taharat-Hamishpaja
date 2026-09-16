@@ -1,8 +1,8 @@
-const CACHE='luaj-tahara-pwa-v26';
+const CACHE='luaj-tahara-pwa-v27';
 const SIDUR_CACHE='luaj-sidur-text-v3';
 const CORE=[
   './','./index.html','./manifest.webmanifest','./style.css','./theme-overrides.css','./dedication-overrides.css','./sidur-overrides.css','./app.js','./pwa-install.js','./icon.svg','./icon-maskable.svg',
-  ...Array.from({length:29},(_,i)=>`./app.part${i+1}.txt`)
+  ...Array.from({length:30},(_,i)=>`./app.part${i+1}.txt`)
 ];
 self.addEventListener('install',event=>{event.waitUntil(caches.open(CACHE).then(cache=>cache.addAll(CORE)).then(()=>self.skipWaiting()));});
 self.addEventListener('activate',event=>{event.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(key=>key!==CACHE&&key!==SIDUR_CACHE).map(key=>caches.delete(key)))).then(()=>self.clients.claim()));});
