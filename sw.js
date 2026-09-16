@@ -1,5 +1,5 @@
-const CACHE='luaj-tahara-pwa-v24';
-const SIDUR_CACHE='luaj-sidur-text-v1';
+const CACHE='luaj-tahara-pwa-v25';
+const SIDUR_CACHE='luaj-sidur-text-v3';
 const CORE=[
   './','./index.html','./manifest.webmanifest','./style.css','./theme-overrides.css','./dedication-overrides.css','./sidur-overrides.css','./app.js','./pwa-install.js','./icon.svg','./icon-maskable.svg',
   ...Array.from({length:28},(_,i)=>`./app.part${i+1}.txt`)
