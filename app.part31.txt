@@ -16,10 +16,12 @@
   let H=rise?360-deg(Math.acos(cosH)):deg(Math.acos(cosH));H/=15;
   const T=H+RA-(0.06571*t)-6.622;return norm(T-lngHour,24);
  }
- function localTime(date,utcHours){
+ function localTime(date,utcHours,kind){
   if(utcHours==null)return 'No disponible';
-  // Redondear al minuto más cercano. Intl por sí solo trunca los segundos y podía mostrar 6:38 cuando el cálculo era 6:38:30+.
-  const raw=Date.UTC(date.getFullYear(),date.getMonth(),date.getDate())+utcHours*3600000,ms=Math.round(raw/60000)*60000;
+  // Convención del Luaj de referencia: Hanetz se lleva al minuto siguiente si el instante cae dentro del minuto;
+  // Shekiat se redondea al minuto más cercano. Esto reproduce CDMX 16-09-2026: Netz 6:25 a.m., Shekiat 6:39 p.m.
+  const raw=Date.UTC(date.getFullYear(),date.getMonth(),date.getDate())+utcHours*3600000;
+  const ms=kind==='netz'?Math.ceil(raw/60000)*60000:Math.round(raw/60000)*60000;
   return new Intl.DateTimeFormat('es-MX',{hour:'numeric',minute:'2-digit',hour12:true}).format(new Date(ms));
  }
  function storedLoc(){try{return JSON.parse(localStorage.getItem(ZKEY)||'null')}catch(e){return null}}
@@ -27,9 +29,12 @@
  function getLoc(){return new Promise(resolve=>{const old=storedLoc();if(old&&Number.isFinite(old.lat)&&Number.isFinite(old.lon))return resolve(old);if(!navigator.geolocation)return resolve(null);navigator.geolocation.getCurrentPosition(p=>{const x={lat:p.coords.latitude,lon:p.coords.longitude};saveLoc(x);resolve(x)},()=>resolve(null),{enableHighAccuracy:false,timeout:7000,maximumAge:86400000});});}
  function hebrewCivilDate(date,ona){return new Date(date.getFullYear(),date.getMonth(),date.getDate(),12,0,0);}
  function inject(date,ona){
-  const c=document.getElementById('choices');if(!c||c.querySelector('.zmanimBox'))return;
+  const c=document.getElementById('choices');if(!c)return;
+  // Defensa adicional contra cualquier versión antigua del bloque duplicado "Puesta del sol".
+  [...c.children].forEach(el=>{if(/Puesta del sol/i.test(el.textContent||''))el.remove()});
+  if(c.querySelector('.zmanimBox'))return;
   const box=document.createElement('div');box.className='zmanimBox';box.style.cssText='grid-column:1 / -1;margin:10px 0 14px;padding:11px 13px;border-radius:12px;background:rgba(31,143,133,.07);line-height:1.7';box.innerHTML='<div><b>Netz Hajama:</b> calculando…</div>'+(ona==='yom'?'<div><b>Shekiat Hajama:</b> calculando…</div>':'');c.insertBefore(box,c.firstChild);
-  getLoc().then(loc=>{if(!loc){box.innerHTML='<div><b>Netz Hajama:</b> activa la ubicación para calcularlo</div>'+(ona==='yom'?'<div><b>Shekiat Hajama:</b> activa la ubicación para calcularla</div>':'');return;}const zdate=hebrewCivilDate(date,ona),rise=solarUTC(zdate,loc.lat,loc.lon,true),set=solarUTC(zdate,loc.lat,loc.lon,false);box.innerHTML='<div><b>Netz Hajama:</b> '+localTime(zdate,rise)+'</div>'+(ona==='yom'?'<div><b>Shekiat Hajama:</b> '+localTime(zdate,set)+'</div>':'');});
+  getLoc().then(loc=>{if(!loc){box.innerHTML='<div><b>Netz Hajama:</b> activa la ubicación para calcularlo</div>'+(ona==='yom'?'<div><b>Shekiat Hajama:</b> activa la ubicación para calcularla</div>':'');return;}const zdate=hebrewCivilDate(date,ona),rise=solarUTC(zdate,loc.lat,loc.lon,true),set=solarUTC(zdate,loc.lat,loc.lon,false);box.innerHTML='<div><b>Netz Hajama:</b> '+localTime(zdate,rise,'netz')+'</div>'+(ona==='yom'?'<div><b>Shekiat Hajama:</b> '+localTime(zdate,set,'shekia')+'</div>':'');});
  }
  openSheet=function(d,o){const result=previousOpenSheet(d,o);setTimeout(()=>inject(new Date(d.getFullYear(),d.getMonth(),d.getDate(),12,0,0),o),0);return result;};
 })();
