@@ -17,18 +17,15 @@
   const T=H+RA-(0.06571*t)-6.622;return norm(T-lngHour,24);
  }
  function localTime(date,utcHours){
-  if(utcHours==null)return 'No disponible';const ms=Date.UTC(date.getFullYear(),date.getMonth(),date.getDate())+utcHours*3600000;
+  if(utcHours==null)return 'No disponible';
+  // Redondear al minuto más cercano. Intl por sí solo trunca los segundos y podía mostrar 6:38 cuando el cálculo era 6:38:30+.
+  const raw=Date.UTC(date.getFullYear(),date.getMonth(),date.getDate())+utcHours*3600000,ms=Math.round(raw/60000)*60000;
   return new Intl.DateTimeFormat('es-MX',{hour:'numeric',minute:'2-digit',hour12:true}).format(new Date(ms));
  }
  function storedLoc(){try{return JSON.parse(localStorage.getItem(ZKEY)||'null')}catch(e){return null}}
  function saveLoc(x){try{localStorage.setItem(ZKEY,JSON.stringify(x))}catch(e){}}
  function getLoc(){return new Promise(resolve=>{const old=storedLoc();if(old&&Number.isFinite(old.lat)&&Number.isFinite(old.lon))return resolve(old);if(!navigator.geolocation)return resolve(null);navigator.geolocation.getCurrentPosition(p=>{const x={lat:p.coords.latitude,lon:p.coords.longitude};saveLoc(x);resolve(x)},()=>resolve(null),{enableHighAccuracy:false,timeout:7000,maximumAge:86400000});});}
- function hebrewCivilDate(date,ona){
-  // La fecha guardada por el calendario representa el día civil mostrado para Onat Yom.
-  // Para Onat Laila queremos el Netz que cierra esa noche y pertenece al mismo día hebreo,
-  // por lo que usamos exactamente el mismo día civil que su Onat Yom correspondiente.
-  return new Date(date.getFullYear(),date.getMonth(),date.getDate(),12,0,0);
- }
+ function hebrewCivilDate(date,ona){return new Date(date.getFullYear(),date.getMonth(),date.getDate(),12,0,0);}
  function inject(date,ona){
   const c=document.getElementById('choices');if(!c||c.querySelector('.zmanimBox'))return;
   const box=document.createElement('div');box.className='zmanimBox';box.style.cssText='grid-column:1 / -1;margin:10px 0 14px;padding:11px 13px;border-radius:12px;background:rgba(31,143,133,.07);line-height:1.7';box.innerHTML='<div><b>Netz Hajama:</b> calculando…</div>'+(ona==='yom'?'<div><b>Shekiat Hajama:</b> calculando…</div>':'');c.insertBefore(box,c.firstChild);
