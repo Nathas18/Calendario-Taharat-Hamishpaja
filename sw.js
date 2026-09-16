@@ -1,4 +1,4 @@
-const CACHE='luaj-tahara-pwa-v31';
+const CACHE='luaj-tahara-pwa-v32';
 const SIDUR_CACHE='luaj-sidur-text-v3';
 const CORE=[
   './','./index.html','./manifest.webmanifest','./style.css','./theme-overrides.css','./dedication-overrides.css','./sidur-overrides.css','./app.js','./pwa-install.js','./icon.svg','./icon-maskable.svg',
