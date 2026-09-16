@@ -1,0 +1,30 @@
+
+(function luajJajamimDirectory(){
+ const jajamim=[
+  {name:'Jajam Yaakob Credi',phone:'5541019331'},
+  {name:'Jajam Shlomo Tawil',phone:'5551092349'},
+  {name:'Jajam David Urfali',phone:'5551015690'},
+  {name:'Jajam Yaacov Maleh',phone:'5551090890'},
+  {name:'Jajam Shaul Maleh',phone:'5551091947'},
+  {name:'Jajam Saly Saed',phone:'5550324797'},
+  {name:'Jajam Mordejai Tussie',phone:'5559895388'},
+  {name:'Jajam Rafi Harari',phone:'5624521110'},
+  {name:'Rab David Tawil',phone:'5559524617'}
+ ];
+ const css=`<style id="luaj-jajamim-css">
+  .jajamActions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
+  .jajamActions .contactAction{margin:0}
+  .jajamActions .sms{background:#e9f8f6!important;color:#0d5f5a!important;border:1px solid #bfe3df!important}
+  @media(max-width:380px){.jajamActions{grid-template-columns:1fr}}
+ </style>`;
+ function render(){
+  const view=document.getElementById('jajamimView');if(!view)return false;
+  if(!document.getElementById('luaj-jajamim-css'))document.head.insertAdjacentHTML('beforeend',css);
+  const cards=jajamim.map(p=>{const intl='52'+p.phone;return `<article class="contactCard"><div class="contactName">${p.name}</div><div class="contactPhone">${p.phone}</div><div class="jajamActions"><a class="contactAction" href="https://wa.me/${intl}" target="_blank" rel="noopener noreferrer">WhatsApp</a><a class="contactAction sms" href="sms:+${intl}">SMS</a></div></article>`}).join('');
+  view.innerHTML=`<div class="contactHero"><div class="contactEyebrow">Luaj Tahará</div><h2>🧔🏻‍♂️ Jajamim</h2><p>Contacto para Sheelat Jajam.</p></div><div class="contactGrid">${cards}</div><div class="contactNote">Selecciona WhatsApp o SMS para contactar directamente al Jajam. Verifica el destinatario antes de compartir información personal o sensible.</div>`;
+  return true;
+ }
+ function install(attempt=0){if(render())return;if(attempt<40)setTimeout(()=>install(attempt+1),100)}
+ setTimeout(()=>install(),0);
+ if(typeof authListeners!=='undefined')authListeners.push(()=>setTimeout(()=>install(),200));
+})();
