@@ -1,5 +1,5 @@
 
-// Ciclo de vida aprobado para Veset HaJodesh Kavua (fijo y Bedilug).
+// Ciclo de vida aprobado para Veset HaJodesh Kavua (fijo y Bedilug). Q-001 a Q-004: ausencia válida sólo con Bediká confirmada.
 // Estados: despierto -> dormido tras 3 ausencias confirmadas -> Jozer Beneor si vuelve al patron;
 // un Kavua nuevo reemplaza definitivamente al anterior.
 // Capa final aislada: no cambia historial ni registros existentes.
@@ -30,9 +30,10 @@
   const target=fromDay+p.delta;const date=nextMonthDate(fromIso,target);return date?{date,day:target}:null;
  }
  function noAt(p,date){
-  return state.events.find(e=>e.type==='kavua_no'&&e.date===date&&e.ona===p.ona&&(e.patternType===p.type||String(e.patternType||'').startsWith('jodesh-')));
+  return state.events.find(e=>isValidKavuaAbsence(e)&&e.date===date&&e.ona===p.ona&&(e.patternType===p.type||String(e.patternType||'').startsWith('jodesh-')));
  }
  function reiyaAt(date,ona){return reiyot().find(r=>r.date===date&&r.ona===ona)}
+ function resolvedNoWithoutAbsenceAt(p,date){return state.events.find(e=>isResolvedKavuaNoWithoutAbsence(e)&&e.date===date&&e.ona===p.ona&&(e.patternType===p.type||String(e.patternType||'').startsWith('jodesh-')))}
  function stateFor(p,all){
   const replacement=all.find(q=>q.establishedAt>p.establishedAt);
   if(replacement)return {...p,status:'replaced',replacement};
@@ -43,6 +44,8 @@
    if(yes){fromIso=expected.date;fromDay=expected.day;misses=0;continue}
    const no=noAt(p,expected.date);
    if(no){misses++;lastNo=no;fromIso=expected.date;fromDay=expected.day;if(misses>=3)break;continue}
+   const noBedika=resolvedNoWithoutAbsenceAt(p,expected.date);
+   if(noBedika){fromIso=expected.date;fromDay=expected.day;continue}
    return {...p,status:'active',misses,projection:expected.date,projectedDay:expected.day,pending:true,lastNo};
   }
   if(misses<3)return {...p,status:'active',misses,projection:expected&&expected.date,projectedDay:expected&&expected.day,pending:true,lastNo};
