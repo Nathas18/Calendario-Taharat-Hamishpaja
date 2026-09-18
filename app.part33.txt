@@ -13,5 +13,9 @@
   tab.onclick=()=>{modal.querySelectorAll('.settingsTab').forEach(x=>x.classList.toggle('active',x.dataset.tab==='admin'));modal.querySelectorAll('.settingsPane').forEach(x=>x.classList.toggle('active',x.dataset.pane==='admin'));content.scrollTop=0;loadAdmin()};
   document.getElementById('adminSaveDedication').onclick=async()=>{const input=document.getElementById('adminDedication'),msg=document.getElementById('adminDedicationMsg'),btn=document.getElementById('adminSaveDedication'),dedication=input.value.trim();if(!dedication){msg.textContent='Escribe un mensaje antes de guardar.';return}btn.disabled=true;msg.textContent='Guardando…';try{const j=await apiCall('admin_save_global_settings',{dedication},s.access_token);document.querySelectorAll('.luajDedication').forEach(x=>x.textContent=j.dedication);msg.textContent='Guardado. El cambio se mostrará a todos los usuarios.'}catch(e){msg.textContent='No se pudo guardar: '+e.message}finally{btn.disabled=false}};
  }
+ function refreshGlobal(){globalDedication()}
+ document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')refreshGlobal()});
+ window.addEventListener('focus',refreshGlobal);
+ setInterval(refreshGlobal,60000);
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
 })();
