@@ -1,0 +1,69 @@
+
+// Reglas rabínicas CONFIRMADAS Q-001 a Q-004.
+// Esta capa NO activa preguntas pendientes del Excel.
+// Q-001: una ausencia de Kavúa sólo cuenta si no hubo Reiyá Y hubo Bediká.
+// Q-002: nunca se supone una ausencia; si falta confirmación, el contador queda pendiente.
+// Q-003: mientras el Kavúa siga activo, no se agrega Oná Benonit (la lógica existente conserva esta regla).
+// Q-004: tras 3 ausencias válidas, el Kavúa puede quedar dormido si no fue reemplazado según las reglas ya aprobadas.
+
+function isValidKavuaAbsence(e){
+ return !!(e&&e.type==='kavua_no'&&e.absenceValid===true&&e.bedikaConfirmed===true);
+}
+function isResolvedKavuaNoWithoutAbsence(e){
+ return !!(e&&e.type==='kavua_check'&&e.result==='no_reiya'&&e.bedikaConfirmed===false);
+}
+
+(function confirmedKavuaAbsenceFlow(){
+ const baseOpenAlertDetails=openAlertDetails;
+ const RULE_VERSION='Q001-Q004-confirmed-2026-09-18';
+ function eventId(){return crypto.randomUUID?crypto.randomUUID():Date.now()+'-'+Math.random()}
+ function samePattern(e,date,ona,type){return e&&e.date===date&&e.ona===ona&&String(e.patternType||'')===String(type||'kavua')}
+ function answers(date,ona,type){return state.events.filter(e=>(e.type==='kavua_no'||e.type==='kavua_check')&&samePattern(e,date,ona,type))}
+ function clearAnswers(date,ona,type){state.events=state.events.filter(e=>!((e.type==='kavua_no'||e.type==='kavua_check')&&samePattern(e,date,ona,type)))}
+ function closeAndRender(){save();document.getElementById('modal').style.display='none';render()}
+ function savePending(date,ona,type,stage){
+  clearAnswers(date,ona,type);
+  state.events.push({date,ona,type:'kavua_check',label:stage==='bedika'?'Kavúa: Bediká pendiente de confirmar':'Kavúa: pendiente confirmar si hubo Reiyá',patternType:type,result:stage==='bedika'?'pending_bedika':'pending_reiya',bedikaConfirmed:null,absenceValid:false,ruleIds:['Q-001','Q-002'],ruleVersion:RULE_VERSION,id:eventId()});
+  closeAndRender();
+ }
+ function saveNoBedika(date,ona,type){
+  clearAnswers(date,ona,type);
+  state.events.push({date,ona,type:'kavua_check',label:'Kavúa: no hubo Reiyá, sin Bediká · no cuenta como ausencia',patternType:type,result:'no_reiya',bedikaConfirmed:false,absenceValid:false,ruleIds:['Q-001','Q-002'],ruleVersion:RULE_VERSION,id:eventId()});
+  closeAndRender();
+ }
+ function saveValidAbsence(date,ona,type){
+  clearAnswers(date,ona,type);
+  state.events.push({date,ona,type:'kavua_no',label:'Kavúa: ausencia confirmada con Bediká',patternType:type,result:'no_reiya',bedikaConfirmed:true,absenceValid:true,ruleIds:['Q-001','Q-002','Q-004'],ruleVersion:RULE_VERSION,id:eventId()});
+  closeAndRender();
+ }
+ function renderBedikaStep(wrap,date,ona,type,notice=''){
+  wrap.innerHTML='<span class="tag">CONFIRMAR KAVÚA</span>'+(notice?'<div class="notice" style="margin:8px 0">'+escapeHtml(notice)+'</div>':'')+'<br><b>Confirmaste que NO hubo Reiyá. ¿Se hizo Bediká en esta oná?</b><div class="notice" style="margin:7px 0">Sólo “NO hubo Reiyá + Bediká” cuenta como una ausencia del Kavúa.</div><div class="confirmRow" id="kBedikaRow"></div>';
+  const row=wrap.querySelector('#kBedikaRow');
+  const yes=document.createElement('button');yes.className='yesBtn';yes.textContent='SÍ · Hubo Bediká';yes.onclick=()=>saveValidAbsence(date,ona,type);
+  const no=document.createElement('button');no.className='noBtn';no.textContent='NO · Sin Bediká';no.onclick=()=>saveNoBedika(date,ona,type);
+  const pending=document.createElement('button');pending.className='secondary';pending.textContent='NO SÉ · Confirmar después';pending.onclick=()=>savePending(date,ona,type,'bedika');
+  row.appendChild(yes);row.appendChild(no);row.appendChild(pending);
+ }
+ function renderReiyaStep(wrap,date,ona,type,notice=''){
+  wrap.innerHTML='<span class="tag">CONFIRMAR KAVÚA</span>'+(notice?'<div class="notice" style="margin:8px 0">'+escapeHtml(notice)+'</div>':'')+'<br><b>¿Hubo Reiyá en esta oná?</b><div class="notice" style="margin:7px 0">Luaj Tahará nunca supone una ausencia. Si no estás segura, puedes dejarlo pendiente.</div><div class="confirmRow" id="kConfirmedFlowRow"></div>';
+  const row=wrap.querySelector('#kConfirmedFlowRow');
+  const yes=document.createElement('button');yes.className='yesBtn';yes.textContent='SÍ · Registrar Reiyá';yes.onclick=()=>{clearAnswers(date,ona,type);add('reiya','Reiyá')};
+  const no=document.createElement('button');no.className='noBtn';no.textContent='NO · No hubo Reiyá';no.onclick=()=>renderBedikaStep(wrap,date,ona,type);
+  const pending=document.createElement('button');pending.className='secondary';pending.textContent='NO SÉ · Confirmar después';pending.onclick=()=>savePending(date,ona,type,'reiya');
+  row.appendChild(yes);row.appendChild(no);row.appendChild(pending);
+ }
+ openAlertDetails=function(d,o,alerts){
+  baseOpenAlertDetails(d,o,alerts);
+  const pat=alerts.find(a=>a.type==='pattern');if(!pat)return;
+  const wrap=document.querySelector('#choices .kavuaStatus');if(!wrap)return;
+  const date=localISO(d),p=pat.pattern||{},type=p.type||'kavua';
+  const existing=answers(date,o,type);
+  const legacy=existing.find(e=>e.type==='kavua_no'&&!isValidKavuaAbsence(e));
+  const pendingBedika=existing.find(e=>e.type==='kavua_check'&&e.result==='pending_bedika');
+  const pendingReiya=existing.find(e=>e.type==='kavua_check'&&e.result==='pending_reiya');
+  if(legacy){renderBedikaStep(wrap,date,o,type,'Existe una confirmación antigua de “NO hubo Reiyá”, pero no quedó registrado si hubo Bediká. Confírmalo para decidir si cuenta como ausencia.');return}
+  if(pendingBedika){renderBedikaStep(wrap,date,o,type,'Esta confirmación quedó pendiente. El contador de ausencias está congelado hasta que indiques si hubo Bediká.');return}
+  if(pendingReiya){renderReiyaStep(wrap,date,o,type,'Esta oná quedó pendiente. El sistema no ha supuesto que hubo una ausencia.');return}
+  renderReiyaStep(wrap,date,o,type);
+ };
+})();
