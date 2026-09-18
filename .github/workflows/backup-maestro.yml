@@ -1,0 +1,16 @@
+name: Backup Maestro Luaj Tahara
+on:
+  push:
+    branches: [backup-maestro-luaj-tahara-2026-09-18]
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/upload-artifact@v4
+        with:
+          name: LUAJ-TAHARA-COPIA-MAESTRA-2026-09-18
+          path: |
+            .
+            !.git
+          include-hidden-files: true
