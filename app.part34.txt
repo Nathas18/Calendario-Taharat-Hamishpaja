@@ -48,16 +48,15 @@ function isResolvedKavuaNoWithoutAbsence(e){
   const row=wrap.querySelector('#kBedikaRow');
   const yes=document.createElement('button');yes.className='yesBtn';yes.textContent='SÍ · Hubo Bediká';yes.onclick=()=>saveValidAbsence(date,ona,type);
   const no=document.createElement('button');no.className='noBtn';no.textContent='NO · Sin Bediká';no.onclick=()=>saveNoBedika(date,ona,type);
-  const pending=document.createElement('button');pending.className='secondary';pending.textContent='NO SÉ · Confirmar después';pending.onclick=()=>savePending(date,ona,type,'bedika');
-  row.appendChild(yes);row.appendChild(no);row.appendChild(pending);
+  const back=document.createElement('button');back.className='secondary';back.textContent='← Regresar';back.onclick=()=>renderReiyaStep(wrap,date,ona,type);
+  row.appendChild(yes);row.appendChild(no);row.appendChild(back);
  }
  function renderReiyaStep(wrap,date,ona,type,notice=''){
-  wrap.innerHTML='<span class="tag">CONFIRMAR KAVÚA</span>'+(notice?'<div class="notice" style="margin:8px 0">'+escapeHtml(notice)+'</div>':'')+'<br><b>¿Hubo Reiyá en esta oná?</b><div class="notice" style="margin:7px 0">Luaj Tahará nunca supone una ausencia. Si no estás segura, puedes dejarlo pendiente.</div><div class="confirmRow" id="kConfirmedFlowRow"></div>';
+  wrap.innerHTML='<span class="tag">CONFIRMAR KAVÚA</span>'+(notice?'<div class="notice" style="margin:8px 0">'+escapeHtml(notice)+'</div>':'')+'<br><b>¿Hubo Reiyá en esta oná?</b><div class="notice" style="margin:7px 0">Selecciona lo que ocurrió en esta oná. Luaj Tahará no supondrá una ausencia sin tu confirmación.</div><div class="confirmRow" id="kConfirmedFlowRow"></div>';
   const row=wrap.querySelector('#kConfirmedFlowRow');
   const yes=document.createElement('button');yes.className='yesBtn';yes.textContent='SÍ · Registrar Reiyá';yes.onclick=()=>{clearAnswers(date,ona,type);add('reiya','Reiyá')};
   const no=document.createElement('button');no.className='noBtn';no.textContent='NO · No hubo Reiyá';no.onclick=()=>renderBedikaStep(wrap,date,ona,type);
-  const pending=document.createElement('button');pending.className='secondary';pending.textContent='NO SÉ · Confirmar después';pending.onclick=()=>savePending(date,ona,type,'reiya');
-  row.appendChild(yes);row.appendChild(no);row.appendChild(pending);
+  row.appendChild(yes);row.appendChild(no);
  }
  function appendCorrectionPanel(date,ona,container){
   if(!container||container.querySelector('#kavuaCorrectionPanel'))return;
