@@ -1,0 +1,16 @@
+
+// Contador privado del administrador. No interviene en autenticación ni cálculos.
+(function adminCounters(){
+ const ADMIN='admcalendarioth@gmail.com';
+ function init(){
+  const email=String(document.getElementById('userEmail')?.textContent||'').trim().toLowerCase();
+  if(email!==ADMIN)return;
+  const modal=document.getElementById('settingsModal'),tabs=modal?.querySelector('.settingsTabs'),content=modal?.querySelector('.settingsContent');
+  if(!modal||!tabs||!content||document.getElementById('adminCounterTab'))return;
+  const tab=document.createElement('button');tab.id='adminCounterTab';tab.type='button';tab.className='settingsTab';tab.textContent='Usuarios';tabs.appendChild(tab);
+  const pane=document.createElement('div');pane.className='settingsPane';pane.id='adminCounterPane';
+  pane.innerHTML='<div class="settingsPaneIntro"><b>Usuarios de Luaj Tahará</b><span>Información privada del administrador.</span></div><div class="settingsSlot"><div class="card settingsMovedCard"><div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;text-align:center"><div><div id="adminTotalUsers" style="font-size:30px;font-weight:800">—</div><div class="notice">Registrados</div></div><div><div id="adminActiveUsers" style="font-size:30px;font-weight:800">—</div><div class="notice">Activos últimos 30 días</div></div></div><div id="adminCounterStatus" class="notice" style="margin-top:10px"></div></div></div>';content.appendChild(pane);
+  tab.onclick=async()=>{modal.querySelectorAll('.settingsTab').forEach(x=>x.classList.remove('active'));modal.querySelectorAll('.settingsPane').forEach(x=>x.classList.remove('active'));tab.classList.add('active');pane.classList.add('active');try{const s=storedSession();if(!s?.access_token)throw new Error('Sesión no disponible');const j=await apiCall('admin_stats',{},s.access_token);document.getElementById('adminTotalUsers').textContent=j.total_users??0;document.getElementById('adminActiveUsers').textContent=j.active_users??0}catch(e){document.getElementById('adminCounterStatus').textContent='No se pudo cargar el contador.'}};
+ }
+ setTimeout(init,800);
+})();
