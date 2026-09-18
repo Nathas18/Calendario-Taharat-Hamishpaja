@@ -1,0 +1,106 @@
+
+// Ciclo de vida aprobado para Veset HaJodesh Kavua (fijo y Bedilug).
+// Estados: despierto -> dormido tras 3 ausencias confirmadas -> Jozer Beneor si vuelve al patron;
+// un Kavua nuevo reemplaza definitivamente al anterior.
+// Capa final aislada: no cambia historial ni registros existentes.
+(function jodeshKavuaLifecycleV2(){
+ const basePossible=possiblePatterns,baseAuto=autoEvents;
+ function reiyot(){return state.events.filter(e=>e.type==='reiya').sort((a,b)=>a.date.localeCompare(b.date)||a.ona.localeCompare(b.ona))}
+ function hp(r){return hebParts(atNoon(r.date))}
+ function sameMonthSequence(x){return x.length===3&&sameOna(x)&&consecutiveHebMonths(x)}
+ function establishments(){
+  const re=reiyot(),out=[],closing=new Set();
+  for(let i=2;i<re.length;i++){
+   const x=re.slice(i-2,i+1),h=x.map(hp);if(!h.every(Boolean)||!sameMonthSequence(x))continue;
+   const d1=h[1].day-h[0].day,d2=h[2].day-h[1].day;
+   if(d1!==d2)continue;
+   // La Reiya que cerro un Kavua anterior no puede iniciar un Kavua competidor.
+   if(closing.has(x[0].id||x[0].date+'|'+x[0].ona))continue;
+   if(d1===0||d1!==0){
+    const p={kind:'jodesh',type:d1===0?'jodesh-kavua':'jodesh-dilug-'+(d1>0?'kadima':'lemafre')+'-'+Math.abs(d1),ona:x[2].ona,delta:d1,establishedAt:x[2].date,establishedDay:h[2].day,sourceIds:x.map(r=>r.id||r.date+'|'+r.ona)};
+    out.push(p);closing.add(x[2].id||x[2].date+'|'+x[2].ona);
+   }
+  }
+  return out;
+ }
+ function nextMonthDate(fromIso,targetDay){
+  return immediateNextHebMonthTarget(fromIso,targetDay);
+ }
+ function nextExpected(p,fromIso,fromDay){
+  const target=fromDay+p.delta;const date=nextMonthDate(fromIso,target);return date?{date,day:target}:null;
+ }
+ function noAt(p,date){
+  return state.events.find(e=>e.type==='kavua_no'&&e.date===date&&e.ona===p.ona&&(e.patternType===p.type||String(e.patternType||'').startsWith('jodesh-')));
+ }
+ function reiyaAt(date,ona){return reiyot().find(r=>r.date===date&&r.ona===ona)}
+ function stateFor(p,all){
+  const replacement=all.find(q=>q.establishedAt>p.establishedAt);
+  if(replacement)return {...p,status:'replaced',replacement};
+  let fromIso=p.establishedAt,fromDay=p.establishedDay,misses=0,lastNo=null,expected=null;
+  for(let guard=0;guard<72;guard++){
+   expected=nextExpected(p,fromIso,fromDay);if(!expected)break;
+   const yes=reiyaAt(expected.date,p.ona);
+   if(yes){fromIso=expected.date;fromDay=expected.day;misses=0;continue}
+   const no=noAt(p,expected.date);
+   if(no){misses++;lastNo=no;fromIso=expected.date;fromDay=expected.day;if(misses>=3)break;continue}
+   return {...p,status:'active',misses,projection:expected.date,projectedDay:expected.day,pending:true,lastNo};
+  }
+  if(misses<3)return {...p,status:'active',misses,projection:expected&&expected.date,projectedDay:expected&&expected.day,pending:true,lastNo};
+  const dormantFrom=lastNo.date,dormantDay=fromDay,later=reiyot().filter(r=>r.date>dormantFrom);
+  // El patron sigue avanzando por meses aun dormido. Jozer Beneor solo si vuelve al dia proyectado y misma ona.
+  let cursorIso=dormantFrom,cursorDay=dormantDay,wake=null,wakeExpected=null;
+  for(let guard=0;guard<72&&!wake;guard++){
+   const ex=nextExpected(p,cursorIso,cursorDay);if(!ex)break;
+   const r=reiyaAt(ex.date,p.ona);if(r){wake=r;wakeExpected=ex;break}
+   cursorIso=ex.date;cursorDay=ex.day;
+   if(atNoon(cursorIso)>new Date())break;
+  }
+  if(wake){
+   const nx=nextExpected(p,wakeExpected.date,wakeExpected.day);
+   return {...p,status:'active',misses:0,joserBeneor:true,wakeDate:wake.date,projection:nx&&nx.date,projectedDay:nx&&nx.day,pending:true};
+  }
+  return {...p,status:'dormant',misses:3,dormantFrom,dormantDay};
+ }
+ function lifecycle(){
+  const hist=establishments();if(!hist.length)return {hist,states:[],latest:null};
+  const states=hist.map(p=>stateFor(p,hist));
+  return {hist,states,latest:states.slice().reverse().find(s=>s.status!=='replaced')||null};
+ }
+ function patternFor(s){
+  if(!s||s.status!=='active'||!s.projection)return null;
+  const dilug=s.delta!==0;
+  let detail=dilug?'Veset HaJódesh Bedilug '+(s.delta>0?'Kadima':'Lemafreá')+' de '+(s.delta>0?'+':'')+s.delta+' por mes, misma oná.':'Veset HaJódesh fijo del día '+s.establishedDay+', misma oná.';
+  if(s.misses>0)detail+=' Lleva '+s.misses+' ausencia'+(s.misses===1?'':'s')+' confirmada'+(s.misses===1?'':'s')+'. El Kavúa sigue despierto: se cuida el Kavúa + HaJódesh de la última Reiyá + Haflagá; no Oná Benonit.';
+  if(s.joserBeneor)detail+=' Reactivado por Jozer Beneor; vuelve a cuidarse solamente el Kavúa mientras acierte en él.';
+  detail+=' Próximo día del Kavúa: '+s.projectedDay+'.';
+  return {...s,title:dilug?'Veset HaJódesh Kavúa Bedilug':'Veset HaJódesh Kavúa',detail,projection:s.projection,kavuaLifecycleV2:true};
+ }
+ activeKavuaPatterns=function(){
+  const s=lifecycle().latest,p=patternFor(s);
+  if(p)return [p];
+  // Si no hay HaJodesh activo, conserva otros tipos de Kavua ya detectados por capas anteriores.
+  return basePossible().filter(x=>x.projection&&!x.type.startsWith('jodesh-')&&['hashavua','haflaga-kavua','haflaga-dilug-kadima','haflaga-dilug-lemafre','haflaga-dilug-sequence'].includes(x.type));
+ };
+ autoEvents=function(){
+  const s=lifecycle().latest,p=patternFor(s);
+  if(!s||s.status==='replaced')return baseAuto();
+  if(s.status==='dormant')return baseAuto();
+  let ordinary=[];
+  if(s.misses>0){
+   const saved=activeKavuaPatterns;try{activeKavuaPatterns=()=>[];ordinary=baseAuto()}finally{activeKavuaPatterns=saved}
+   // Con 1 o 2 ausencias: Kavua + HaJodesh ultima Reiya + Haflaga, nunca Beinoni.
+   ordinary=ordinary.filter(e=>e.type!=='beinoni'&&e.orSource!=='beinoni');
+  }
+  if(p)ordinary.push({date:p.projection,ona:p.ona,type:'pattern',auto:true,label:'Kavúa · confirmar Reiyá',pattern:p});
+  return ordinary;
+ };
+ possiblePatterns=function(){
+  let out=basePossible().filter(x=>!x.type.startsWith('jodesh-'));
+  const s=lifecycle().latest,p=patternFor(s);
+  if(p)out.push(p);
+  else if(s&&s.status==='dormant')out.push({type:s.type,title:'Veset HaJódesh Kavúa dormido · Jozer Beneor',detail:'Tres ausencias confirmadas durmieron este Kavúa. Ya no se cuida como Kavúa: vuelven HaJódesh ordinario, Haflagá y Oná Benonit. Si vuelve a coincidir con el día que corresponde al patrón y la misma oná, despierta por Jozer Beneor. Si se establece otro Kavúa, el anterior queda reemplazado definitivamente.',projection:null,ona:s.ona,kavuaDormant:true});
+  return out;
+ };
+ setTimeout(()=>{try{render()}catch(e){console.error('Jodesh lifecycle v2',e)}},150);
+ authListeners.push(()=>setTimeout(()=>{try{render()}catch(e){}},500));
+})();
