@@ -51,7 +51,7 @@ function autoEvents(){
  if(kavua.length){
    for(const p of kavua){
      if(!p.projection||!p.ona)continue;
-     let no=state.events.find(e=>e.type==='kavua_no'&&e.date===p.projection&&e.ona===p.ona&&e.patternType===p.type);
+     let no=state.events.find(e=>isValidKavuaAbsence(e)&&e.date===p.projection&&e.ona===p.ona&&e.patternType===p.type);
      out.push({date:p.projection,ona:p.ona,type:'pattern',auto:true,label:(no?'Kavúa · NO hubo Reiyá':'Kavúa · confirmar Reiyá'),pattern:p,confirmedNo:!!no});
    }
  }else{
