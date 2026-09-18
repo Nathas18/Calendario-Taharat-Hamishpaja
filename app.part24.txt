@@ -1,7 +1,7 @@
 
 // Reporte PDF profesional del historial. Solo lectura: no modifica eventos ni reglas halájicas.
 (function luajHistoryPdf(){
- const TYPE={reiya:['Reiyá',[200,75,85]],ketem:['Ketem',[220,115,145]],hefsek:['Hefsek Tahará',[22,135,125]],note:['Nota',[95,116,113]],symptom:['Síntoma',[95,116,113]],kavua_no:['Ausencia de Kavúa confirmada',[111,78,140]]};
+ const TYPE={reiya:['Reiyá',[200,75,85]],ketem:['Ketem',[220,115,145]],hefsek:['Hefsek Tahará',[22,135,125]],note:['Nota',[95,116,113]],symptom:['Síntoma',[95,116,113]],kavua_no:['Ausencia de Kavúa confirmada con Bediká',[111,78,140]],kavua_check:['Confirmación de Kavúa',[111,78,140]]};
  function loadJsPdf(){return new Promise((ok,fail)=>{if(window.jspdf&&window.jspdf.jsPDF)return ok(window.jspdf.jsPDF);let s=document.querySelector('script[data-luaj-jspdf]');if(s){s.addEventListener('load',()=>ok(window.jspdf.jsPDF),{once:true});s.addEventListener('error',fail,{once:true});return}s=document.createElement('script');s.src='https://cdn.jsdelivr.net/npm/jspdf@2.5.2/dist/jspdf.umd.min.js';s.async=true;s.dataset.luajJspdf='1';s.onload=()=>ok(window.jspdf.jsPDF);s.onerror=fail;document.head.appendChild(s)})}
  function onaName(o){return o==='yom'?'Yom':o==='laila'?'Laila':'—'}
  function civil(iso){return atNoon(iso).toLocaleDateString('es-MX',{day:'numeric',month:'long',year:'numeric'})}
